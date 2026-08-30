@@ -1,42 +1,158 @@
-import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-// Reads from Vercel/Netlify environment variable in production (VITE_API_URL).
-// Falls back to localhost for local development — so this file never needs
-// manual editing when you move from local to deployed.
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-const api = axios.create({ baseURL: BASE_URL });
-
-// Attach the saved token to every request automatically.
-api.interceptors.request.use((config) => {
+async function request(path, options = {}) {
   const token = localStorage.getItem("drishti_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const headers = {
+    "Content-Type": options.isForm ? undefined : "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  // For form data (login), don't set Content-Type — let browser set multipart boundary
+  if (options.isForm) delete headers["Content-Type"];
+
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    body: options.body,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Request failed" }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
   }
-  return config;
-});
+  return res.json();
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────
+
+export async function register(data) {
+  return request("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
 
 export async function login(email, password) {
-  // Backend's /auth/login expects OAuth2 form data, not JSON — it uses
-  // "username" as the field name for email, per FastAPI's OAuth2PasswordRequestForm.
-  const form = new URLSearchParams();
-  form.append("username", email);
-  form.append("password", password);
-  const res = await api.post("/auth/login", form, {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const formData = new URLSearchParams();
+  formData.append("username", email);
+  formData.append("password", password);
+  return request("/auth/login", {
+    method: "POST",
+    body: formData,
+    isForm: true,
   });
-  return res.data;
 }
 
-export async function fetchMe() {
-  const res = await api.get("/dashboard/me");
-  return res.data;
+// ── Dashboard Stats ────────────────────────────────────────────────────
+
+export async function getStats() {
+  return request("/api/stats");
 }
 
-export async function register({ name, email, password, role, phone }) {
-  // Backend's /auth/register expects JSON, unlike /auth/login (form data).
-  const res = await api.post("/auth/register", { name, email, password, role, phone });
-  return res.data;
+// ── Institutes ─────────────────────────────────────────────────────────
+
+export async function getInstitutes(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.risk_level) params.set("risk_level", filters.risk_level);
+  if (filters.state) params.set("state", filters.state);
+  if (filters.type) params.set("type", filters.type);
+  const qs = params.toString();
+  return request(`/api/institutes${qs ? `?${qs}` : ""}`);
 }
 
-export default api;
+export async function getInstituteDetail(id) {
+  return request(`/api/institutes/${id}`);
+}
+
+// ── Inspections ────────────────────────────────────────────────────────
+
+export async function getInspections(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.type) params.set("type", filters.type);
+  const qs = params.toString();
+  return request(`/api/inspections${qs ? `?${qs}` : ""}`);
+}
+
+export async function assignRandomInspector(inspectionId) {
+  return request(`/api/inspections/${inspectionId}/assign-random`, {
+    method: "POST",
+  });
+}
+
+// ── Alerts ─────────────────────────────────────────────────────────────
+
+export async function getAlerts(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.severity) params.set("severity", filters.severity);
+  if (filters.resolved !== undefined) params.set("resolved", filters.resolved);
+  const qs = params.toString();
+  return request(`/api/alerts${qs ? `?${qs}` : ""}`);
+}
+
+export async function resolveAlert(alertId) {
+  return request(`/api/alerts/${alertId}/resolve`, { method: "POST" });
+}
+
+// ── CCTV ───────────────────────────────────────────────────────────────
+
+export async function getCCTV(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  const qs = params.toString();
+  return request(`/api/cctv${qs ? `?${qs}` : ""}`);
+}
+
+// ── Complaints ─────────────────────────────────────────────────────────
+
+export async function getComplaints(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.category) params.set("category", filters.category);
+  if (filters.status) params.set("status", filters.status);
+  const qs = params.toString();
+  return request(`/api/complaints${qs ? `?${qs}` : ""}`);
+}
+
+// ── Analytics ──────────────────────────────────────────────────────────
+
+export async function getAnalytics() {
+  return request("/api/analytics");
+}
+
+// ── Risk Map ───────────────────────────────────────────────────────────
+
+export async function getRiskMap() {
+  return request("/api/risk-map");
+}
+
+// ── Video Calls ────────────────────────────────────────────────────────
+
+export async function getVideoCalls() {
+  return request("/api/video-calls");
+}
+
+export async function initiateVC(instituteId, calledPerson, role) {
+  return request(
+    `/api/video-calls/initiate?institute_id=${instituteId}&called_person=${encodeURIComponent(calledPerson)}&role=${role}`,
+    { method: "POST" }
+  );
+}
+
+export async function endVC(callId, notes = "") {
+  return request(`/api/video-calls/${callId}/end?notes=${encodeURIComponent(notes)}`, {
+    method: "POST",
+  });
+}
+
+// ── Beneficiaries ──────────────────────────────────────────────────────
+
+export async function getBeneficiaries() {
+  return request("/api/beneficiaries");
+}
+
+// ── Predictive Inspections ─────────────────────────────────────────────
+
+export async function getPredictiveInspections() {
+  return request("/api/predictive-inspections");
+}

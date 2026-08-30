@@ -1,16 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import auth, dashboard
+from .database import engine, Base
+from .routes.auth import router as auth_router
+from .routes.dashboard_api import router as dashboard_router
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="DRISHTI API",
-    description="Backend for the DoSJE Smart Real-Time Monitoring & Inspection App",
-    version="0.1.0",
+    title="DRISHTI AI",
+    description="Digital Real-time Intelligent Surveillance, Tracking & Inspection System",
+    version="1.0.0",
 )
 
-# During the hackathon, allow all origins so the mobile app / dashboard can call this
-# freely from any dev machine. Lock this down to specific domains before production.
+# CORS — allow all origins for dev/demo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,10 +23,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(dashboard.router)
+# Register routers
+app.include_router(auth_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
-def health_check():
-    return {"status": "ok", "service": "drishti-backend"}
+def root():
+    return {
+        "name": "DRISHTI AI",
+        "full_name": "Digital Real-time Intelligent Surveillance, Tracking & Inspection System",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "status": "operational",
+    }
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}

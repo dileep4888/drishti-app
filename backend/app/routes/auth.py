@@ -1,57 +1,73 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr
 
-from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_access_token
-from app.models.user import User
+from ..database import get_db
+from ..models import User
+from ..security import verify_password, get_password_hash, create_access_token
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: str  # inspector | pmu_admin | department_official | ngo_incharge
+    role: str = "department_official"
     phone: str | None = None
+    state: str | None = None
+    district: str | None = None
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    role: str
+class RegisterResponse(BaseModel):
+    id: int
     name: str
+    email: str
+    role: str
+    access_token: str
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == payload.email).first()
+class LoginResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+    access_token: str
+
+
+@router.post("/register", response_model=RegisterResponse)
+def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     user = User(
-        name=payload.name,
-        email=payload.email,
-        password_hash=hash_password(payload.password),
-        role=payload.role,
-        phone=payload.phone,
+        name=req.name,
+        email=req.email,
+        hashed_password=get_password_hash(req.password),
+        role=req.role,
+        phone=req.phone,
+        state=req.state,
+        district=req.district,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    token = create_access_token({"user_id": user.id, "role": user.role})
-    return TokenResponse(access_token=token, role=user.role, name=user.name)
+    token = create_access_token(data={"sub": user.email})
+    return RegisterResponse(
+        id=user.id, name=user.name, email=user.email, role=user.role, access_token=token
+    )
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # OAuth2PasswordRequestForm uses "username" as the field name — we treat it as email.
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
+@router.post("/login", response_model=LoginResponse)
+def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form.username).first()
+    if not user or not verify_password(form.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    token = create_access_token({"user_id": user.id, "role": user.role})
-    return TokenResponse(access_token=token, role=user.role, name=user.name)
+    token = create_access_token(data={"sub": user.email})
+    return LoginResponse(
+        id=user.id, name=user.name, email=user.email, role=user.role, access_token=token
+    )
