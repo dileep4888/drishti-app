@@ -1,0 +1,33 @@
+.dashboard {
+  display: flex;
+  min-height: 100%;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 36px 44px;
+  max-width: 900px;
+}
+
+.page-header h2 {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--navy-deep);
+}
+
+.page-header p {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+  .dashboard {
+    flex-direction: column;
+  }
+  .dashboard-main {
+    padding: 24px;
+  }
+}

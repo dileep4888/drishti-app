@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import RiskStamp from "../components/RiskStamp";
+import LiveFeedModal from "../components/LiveFeedModal";
 import "./Dashboard.css";
 
 // TODO: replace with a real call to GET /institutes once that endpoint is built.
@@ -15,95 +15,51 @@ const MOCK_INSTITUTES = [
 ];
 
 export default function Dashboard() {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const savedName = localStorage.getItem("drishti_name");
-    const savedRole = localStorage.getItem("drishti_role");
-    if (!localStorage.getItem("drishti_token")) {
-      navigate("/login");
-      return;
-    }
-    setName(savedName || "");
-    setRole(savedRole || "");
-  }, [navigate]);
-
-  function handleLogout() {
-    localStorage.clear();
-    navigate("/login");
-  }
+  const [activeFeed, setActiveFeed] = useState(null);
 
   const flaggedCount = MOCK_INSTITUTES.filter((i) => i.risk_score >= 70).length;
   const watchCount = MOCK_INSTITUTES.filter((i) => i.risk_score >= 35 && i.risk_score < 70).length;
 
   return (
-    <div className="dashboard">
-      <aside className="dashboard-sidebar">
-        <div className="sidebar-brand">
-          <p className="sidebar-eyebrow">DoSJE</p>
-          <h1 className="sidebar-title">DRISHTI</h1>
+    <>
+      <header className="page-header">
+        <h2>Institute register</h2>
+        <p>Live status across all onboarded projects, NGOs and institutes.</p>
+      </header>
+
+      <section className="summary-row">
+        <div className="summary-card">
+          <span className="summary-number">{MOCK_INSTITUTES.length}</span>
+          <span className="summary-label">Onboarded institutes</span>
         </div>
-        <nav className="sidebar-nav">
-          <a className="sidebar-nav__item sidebar-nav__item--active" href="#">
-            Institute register
-          </a>
-          <a className="sidebar-nav__item" href="#">
-            Live inspections
-          </a>
-          <a className="sidebar-nav__item" href="#">
-            VC call log
-          </a>
-          <a className="sidebar-nav__item" href="#">
-            Risk flags
-          </a>
-        </nav>
-        <div className="sidebar-footer">
-          <p className="sidebar-user">{name}</p>
-          <p className="sidebar-role">{role?.replace("_", " ")}</p>
-          <button className="sidebar-logout" onClick={handleLogout}>
-            Sign out
-          </button>
+        <div className="summary-card summary-card--amber">
+          <span className="summary-number">{watchCount}</span>
+          <span className="summary-label">Under watch</span>
         </div>
-      </aside>
+        <div className="summary-card summary-card--red">
+          <span className="summary-number">{flaggedCount}</span>
+          <span className="summary-label">Flagged this week</span>
+        </div>
+      </section>
 
-      <main className="dashboard-main">
-        <header className="dashboard-header">
-          <h2>Institute register</h2>
-          <p>Live status across all onboarded projects, NGOs and institutes.</p>
-        </header>
-
-        <section className="summary-row">
-          <div className="summary-card">
-            <span className="summary-number">{MOCK_INSTITUTES.length}</span>
-            <span className="summary-label">Onboarded institutes</span>
-          </div>
-          <div className="summary-card summary-card--amber">
-            <span className="summary-number">{watchCount}</span>
-            <span className="summary-label">Under watch</span>
-          </div>
-          <div className="summary-card summary-card--red">
-            <span className="summary-number">{flaggedCount}</span>
-            <span className="summary-label">Flagged this week</span>
-          </div>
-        </section>
-
-        <section className="institute-list">
-          {MOCK_INSTITUTES.map((inst) => (
-            <div className="institute-row" key={inst.id}>
-              <RiskStamp score={inst.risk_score} />
-              <div className="institute-details">
-                <h3>{inst.name}</h3>
-                <p className="institute-meta">
-                  {inst.district} · Last inspected {inst.last_inspected_at}
-                </p>
-              </div>
-              <button className="institute-action">View live feed</button>
+      <section className="institute-list">
+        {MOCK_INSTITUTES.map((inst) => (
+          <div className="institute-row" key={inst.id}>
+            <RiskStamp score={inst.risk_score} />
+            <div className="institute-details">
+              <h3>{inst.name}</h3>
+              <p className="institute-meta">
+                {inst.district} &middot; Last inspected {inst.last_inspected_at}
+              </p>
             </div>
-          ))}
-        </section>
-      </main>
-    </div>
+            <button className="institute-action" onClick={() => setActiveFeed(inst)}>
+              View live feed
+            </button>
+          </div>
+        ))}
+      </section>
+
+      <LiveFeedModal institute={activeFeed} onClose={() => setActiveFeed(null)} />
+    </>
   );
 }
