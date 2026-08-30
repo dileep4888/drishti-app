@@ -13,16 +13,28 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app):
-    # On startup: drop and recreate all tables to match current models,
-    # then seed demo data. This handles schema drift between deploys.
-    logger.info("Dropping and recreating all tables...")
-    Base.metadata.drop_all(bind=engine)
+    # On startup: recreate tables and seed if needed.
+    # Use raw SQL to disable FK checks for clean drops on MySQL.
+    from sqlalchemy import text
+    from .database import SessionLocal
+    from .models import User
+
+    is_mysql = str(engine.url).startswith("mysql")
+
+    with engine.begin() as conn:
+        if is_mysql:
+            conn.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+        # Drop all tables
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(text(f"DROP TABLE IF EXISTS {table.name}"))
+        if is_mysql:
+            conn.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+
+    # Create all tables
     Base.metadata.create_all(bind=engine)
     logger.info("Tables created.")
 
     # Seed if empty
-    from .database import SessionLocal
-    from .models import User
     db = SessionLocal()
     try:
         if not db.query(User).first():
