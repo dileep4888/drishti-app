@@ -1,0 +1,37 @@
+.risk-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  transform: rotate(-6deg);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  flex-shrink: 0;
+}
+
+.risk-stamp__label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.risk-stamp__score {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.risk-stamp--clear {
+  color: var(--stamp-green);
+}
+
+.risk-stamp--watch {
+  color: var(--stamp-amber);
+}
+
+.risk-stamp--high {
+  color: var(--stamp-red);
+}

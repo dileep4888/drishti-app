@@ -1,0 +1,57 @@
+:root {
+  /* Color tokens - "inspection ledger" concept: navy authority + paper +
+     wax-stamp risk badges instead of generic red/yellow/green pills */
+  --navy-deep: #16213e;
+  --navy-mid: #1f3358;
+  --paper: #f6f4ee;
+  --paper-raised: #ffffff;
+  --ink: #232323;
+  --ink-soft: #5b5b52;
+  --rule: #ddd8c8;
+  --stamp-red: #a83e30;
+  --stamp-amber: #b3812f;
+  --stamp-green: #3f6b4a;
+  --steel: #3e5c76;
+
+  --font-display: "Source Serif 4", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--steel);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
