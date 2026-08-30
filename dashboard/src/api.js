@@ -33,4 +33,10 @@ export async function fetchMe() {
   return res.data;
 }
 
+export async function register({ name, email, password, role, phone }) {
+  // Backend's /auth/register expects JSON, unlike /auth/login (form data).
+  const res = await api.post("/auth/register", { name, email, password, role, phone });
+  return res.data;
+}
+
 export default api;
