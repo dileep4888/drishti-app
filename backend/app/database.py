@@ -1,22 +1,49 @@
+"""Firebase Firestore database connection."""
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+import json
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./drishti.db")
+_db = None
 
-# If using MySQL on Railway, swap sqlite driver
-connect_args = {}
-if DATABASE_URL.startswith("sqlite"):
-    connect_args["check_same_thread"] = False
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+def get_firestore():
+    """Initialize Firebase Admin SDK and return Firestore client."""
+    global _db
+    if _db is not None:
+        return _db
+
+    # Try loading from environment variable (JSON string)
+    firebase_cred_json = os.getenv("FIREBASE_CREDENTIALS")
+    if firebase_cred_json:
+        try:
+            cred_info = json.loads(firebase_cred_json)
+            cred = credentials.Certificate(cred_info)
+        except (json.JSONDecodeError, Exception):
+            # Might be a file path
+            cred = credentials.Certificate(firebase_cred_json)
+    else:
+        # Try local service account file
+        cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "serviceAccountKey.json")
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+        else:
+            # Default credentials (for environments with ADC)
+            cred = None
+
+    if cred:
+        firebase_admin.initialize_app(cred)
+    else:
+        firebase_admin.initialize_app()
+
+    _db = firestore.client()
+    return _db
 
 
 def get_db():
-    db = SessionLocal()
+    """Dependency for FastAPI routes — yields Firestore client."""
+    db = get_firestore()
     try:
         yield db
     finally:
-        db.close()
+        pass  # Firestore client doesn't need explicit close
