@@ -24,11 +24,19 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./drishti.db")
-if DATABASE_URL.startswith("mysql"):
-    DATABASE_URL = "sqlite:///./drishti.db"
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+# Vercel/postgres providers sometimes use postgres:// which SQLAlchemy needs as postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+is_sqlite = "sqlite" in DATABASE_URL
+connect_args = {"check_same_thread": False} if is_sqlite else {}
+engine = create_engine(
+    DATABASE_URL,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    **({} if is_sqlite else {"pool_size": 5, "pool_recycle": 300}),
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -284,7 +292,7 @@ class RiskScore(Base):
 def seed():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
-    if db.query(User).first():
+    if db.query(User).filter(User.email == "dileepbairwa48@gmail.com").first():
         db.close()
         return
     users = [
@@ -823,7 +831,8 @@ def get_predictive_inspections(db: Session = Depends(get_db), user: User = Depen
 
 @app.get("/")
 def root():
-    return {"name": "DRISHTI AI", "version": "3.0.0", "backend": "Vercel Serverless + SQLite", "docs": "/docs", "status": "operational"}
+    db_type = "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite"
+    return {"name": "DRISHTI AI", "version": "3.0.0", "backend": f"Vercel Serverless + {db_type}", "docs": "/docs", "status": "operational"}
 
 
 @app.get("/health")
