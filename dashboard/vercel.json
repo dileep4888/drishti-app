@@ -5,10 +5,10 @@
       "use": "@vercel/python"
     },
     {
-      "src": "dashboard/package.json",
+      "src": "package.json",
       "use": "@vercel/static",
       "config": {
-        "outputDirectory": "dashboard/dist"
+        "outputDirectory": "dist"
       }
     }
   ],
@@ -38,9 +38,16 @@
       "dest": "/api/index.py"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|eot|map))",
+      "dest": "/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/dashboard/$1"
+      "dest": "/index.html"
     }
-  ],
-  "outputDirectory": "dashboard/dist"
+  ]
 }
