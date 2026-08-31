@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTheme } from "../ThemeContext";
 import {
   getStats, getInstitutes, getInstituteDetail, getInspections,
   assignRandomInspector, getAlerts, resolveAlert, getCCTV,
@@ -91,7 +92,8 @@ function StatusBadge({ status }) {
 
 // ── Main Dashboard ─────────────────────────────────────────────────────
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard({ user, onLogout, onNavigate }) {
+  const { theme, toggleTheme } = useTheme();
   const [activeNav, setActiveNav] = useState("overview");
   const [stats, setStats] = useState(null);
   const [institutes, setInstitutes] = useState([]);
@@ -218,6 +220,9 @@ export default function Dashboard({ user, onLogout }) {
             <div className="user-name">{user.name}</div>
             <div className="user-role">{user.role?.replace(/_/g, " ")}</div>
           </div>
+          <button className="theme-toggle-sm" onClick={toggleTheme} title="Toggle theme">
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
           <button className="logout-btn" onClick={onLogout} title="Sign out">⏻</button>
         </div>
       </aside>

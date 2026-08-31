@@ -26,6 +26,13 @@
   padding: 2rem;
 }
 
+.login-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .login-brand {
   text-align: center;
   margin-bottom: 2rem;
@@ -161,6 +168,21 @@
   color: var(--accent-blue);
   font-weight: 600;
   font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.theme-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-blue);
 }
 
 .link-btn:hover {

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { login } from "../api";
+import { useTheme } from "../ThemeContext";
 import "./Login.css";
 
 export default function Login({ onLogin, onNavigate }) {
+  const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,6 +28,13 @@ export default function Login({ onLogin, onNavigate }) {
     <div className="login-page">
       <div className="login-bg-grid" />
       <div className="login-container">
+        <div className="login-top-bar">
+          <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
+          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+        </div>
+
         <div className="login-brand">
           <div className="login-logo">
             <span className="login-logo-icon">👁</span>

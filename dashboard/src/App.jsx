@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
+import { ThemeProvider } from "./ThemeContext";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
-function App() {
-  const [route, setRoute] = useState(window.location.hash.slice(1) || "/dashboard");
+function AppRoutes() {
+  const [route, setRoute] = useState(window.location.hash.slice(1) || "/");
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Check for stored auth
     const stored = localStorage.getItem("drishti_user");
     if (stored) {
       try { setUser(JSON.parse(stored)); } catch { /* ignore */ }
     }
-
-    const onHash = () => setRoute(window.location.hash.slice(1) || "/dashboard");
+    const onHash = () => setRoute(window.location.hash.slice(1) || "/");
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -34,10 +34,13 @@ function App() {
     localStorage.removeItem("drishti_token");
     localStorage.removeItem("drishti_user");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
-  // Route logic
+  // Routes
+  if (route === "/" || route === "") {
+    return <Landing onNavigate={navigate} />;
+  }
   if (route === "/login") {
     return <Login onLogin={handleLogin} onNavigate={navigate} />;
   }
@@ -45,13 +48,21 @@ function App() {
     return <Register onLogin={handleLogin} onNavigate={navigate} />;
   }
 
-  // Protected: redirect to login if not authenticated
+  // Protected: redirect to landing if not authenticated
   if (!user) {
     navigate("/login");
     return null;
   }
 
   return <Dashboard user={user} onLogout={handleLogout} onNavigate={navigate} />;
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppRoutes />
+    </ThemeProvider>
+  );
 }
 
 export default App;
