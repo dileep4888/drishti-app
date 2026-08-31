@@ -6,6 +6,11 @@ import {
   getComplaints, getAnalytics, getRiskMap, getVideoCalls,
   getBeneficiaries, getPredictiveInspections,
 } from "../api";
+import GlobalSearch from "../components/GlobalSearch";
+import ExportReport from "../components/ExportReport";
+import SentimentAnalyzer from "../components/SentimentAnalyzer";
+import ExifVerifier from "../components/ExifVerifier";
+import VideoCallModal from "../components/VideoCallModal";
 import "./Dashboard.css";
 
 const RiskMapSection = lazy(() => import("./RiskMapSection"));
@@ -103,6 +108,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const [videoCalls, setVideoCalls] = useState([]);
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [predictive, setPredictive] = useState([]);
+  const [videoCallRoom, setVideoCallRoom] = useState(null);
   const [selectedInstitute, setSelectedInstitute] = useState(null);
   const [instituteDetail, setInstituteDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,6 +118,25 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   useEffect(() => {
     loadTabData();
   }, [activeNav]);
+
+  // Real-time alert polling (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const newAlerts = await getAlerts();
+        const prevIds = alerts.map((a) => a.id).join(",");
+        const newIds = newAlerts.map((a) => a.id).join(",");
+        if (prevIds && prevIds !== newIds) {
+          setAlerts(newAlerts);
+          const unread = newAlerts.filter((a) => !a.is_resolved).length;
+          if (unread > 0) {
+            document.title = `(${unread}) DRISHTI AI — New Alerts!`;
+          }
+        }
+      } catch {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [alerts]);
 
   async function loadTabData() {
     setLoading(true);
@@ -188,6 +213,11 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
   return (
     <div className="dashboard">
+      {/* Video Call Modal */}
+      {videoCallRoom && (
+        <VideoCallModal roomName={videoCallRoom} displayName={user.name} onClose={() => setVideoCallRoom(null)} />
+      )}
+
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
@@ -196,6 +226,17 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             <div className="brand-name">DRISHTI AI</div>
             <div className="brand-sub">Surveillance System</div>
           </div>
+        </div>
+
+        <div className="sidebar-search">
+          <GlobalSearch
+            institutes={institutes}
+            inspections={inspections}
+            alerts={alerts}
+            complaints={complaints}
+            onNavigate={(nav) => setActiveNav(nav)}
+            onSelectInstitute={handleViewInstitute}
+          />
         </div>
 
         <nav className="sidebar-nav">
@@ -228,7 +269,8 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       <main className="main-content">
         <header className="main-header">
           <div>
-            <h1 className="page-title">
+            <div className="header-top-row">
+              <h1 className="page-title">
               {NAV_ITEMS.find((n) => n.key === activeNav)?.icon}{" "}
               {NAV_ITEMS.find((n) => n.key === activeNav)?.label}
             </h1>
@@ -246,8 +288,12 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
               {activeNav === "predictive" && "AI-predicted inspection priorities"}
             </p>
           </div>
-          <div className="header-time">
-            {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          <div className="header-actions">
+              <ExportReport stats={stats} institutes={institutes} inspections={inspections} alerts={alerts} complaints={complaints} activeNav={activeNav} />
+              <div className="header-time">
+                {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -476,6 +522,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             {/* ── COMPLAINTS ───────────────────────────────────── */}
             {activeNav === "complaints" && (
               <>
+                <SentimentAnalyzer complaints={complaints} />
                 <FilterBar>
                   <Select label="Category" value={filters.category || ""} onChange={(v) => { setFilters({ ...filters, category: v }); }}
                     options={["staff_absent", "service_not_received", "fake_attendance", "infrastructure", "misbehavior", "other"]} />
@@ -517,7 +564,13 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
             {/* ── VIDEO CALLS ──────────────────────────────────── */}
             {activeNav === "video-calls" && (
-              <div className="table-wrapper">
+              <>
+                <div className="vc-actions">
+                  <button className="btn-primary" onClick={() => setVideoCallRoom(`official-${Date.now()}`)}>
+                    🎥 Start Surprise Video Call
+                  </button>
+                </div>
+                <div className="table-wrapper">
                 <table className="data-table full">
                   <thead>
                     <tr>
@@ -543,6 +596,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             {/* ── BENEFICIARIES ────────────────────────────────── */}
@@ -569,6 +623,11 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* ── EXIF VERIFIER ────────────────────────────────── */}
+            {activeNav === "video-calls" && (
+              <ExifVerifier />
             )}
 
             {/* ── PREDICTIVE INSPECTIONS ───────────────────────── */}
