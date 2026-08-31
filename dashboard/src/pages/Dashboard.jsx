@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useTheme } from "../ThemeContext";
 import {
   getStats, getInstitutes, getInstituteDetail, getInspections,
@@ -6,13 +6,10 @@ import {
   getComplaints, getAnalytics, getRiskMap, getVideoCalls,
   getBeneficiaries, getPredictiveInspections,
 } from "../api";
-import {
-  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from "recharts";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import "./Dashboard.css";
+
+const RiskMapSection = lazy(() => import("./RiskMapSection"));
+const AnalyticsSection = lazy(() => import("./AnalyticsSection"));
 
 const NAV_ITEMS = [
   { key: "overview", label: "Overview", icon: "📊" },
@@ -401,44 +398,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
             {/* ── RISK MAP ─────────────────────────────────────── */}
             {activeNav === "map" && (
-              <div className="card map-card">
-                <div className="map-container">
-                  <MapContainer center={[22.5, 78.9]} zoom={5} style={{ height: "100%", width: "100%" }}>
-                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                    {riskMap.map((inst) => {
-                      const color = inst.risk_level === "critical" ? "#991b1b" :
-                        inst.risk_level === "high" ? "#ef4444" :
-                        inst.risk_level === "medium" ? "#eab308" : "#22c55e";
-                      return (
-                        <CircleMarker
-                          key={inst.id}
-                          center={[inst.lat, inst.lng]}
-                          radius={8 + (inst.risk_score / 10)}
-                          fillColor={color}
-                          fillOpacity={0.8}
-                          color={color}
-                          weight={2}
-                        >
-                          <Popup>
-                            <div style={{ color: "#1a1a1a", fontFamily: "Inter, sans-serif" }}>
-                              <strong>{inst.name}</strong><br />
-                              {inst.district} — {inst.type}<br />
-                              Risk: {inst.risk_score}/100 ({inst.risk_level})<br />
-                              Trust: {inst.trust_score}/100
-                            </div>
-                          </Popup>
-                        </CircleMarker>
-                      );
-                    })}
-                  </MapContainer>
-                </div>
-                <div className="map-legend">
-                  <span className="legend-item"><span className="legend-dot" style={{ background: "#22c55e" }} /> Low Risk</span>
-                  <span className="legend-item"><span className="legend-dot" style={{ background: "#eab308" }} /> Medium Risk</span>
-                  <span className="legend-item"><span className="legend-dot" style={{ background: "#ef4444" }} /> High Risk</span>
-                  <span className="legend-item"><span className="legend-dot" style={{ background: "#991b1b" }} /> Critical</span>
-                </div>
-              </div>
+              <Suspense fallback={<div className="loading-state"><div className="spinner" /><p>Loading map...</p></div>}>
+                <RiskMapSection riskMap={riskMap} />
+              </Suspense>
             )}
 
             {/* ── ALERTS ────────────────────────────────────────── */}
@@ -548,101 +510,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
             {/* ── ANALYTICS ────────────────────────────────────── */}
             {activeNav === "analytics" && analytics && (
-              <div className="analytics-grid">
-                {/* Risk Distribution */}
-                <div className="card chart-card">
-                  <h3 className="card-title">Risk Distribution</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie data={analytics.risk_distribution} cx="50%" cy="50%"
-                        innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value">
-                        {analytics.risk_distribution.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Inspection Status */}
-                <div className="card chart-card">
-                  <h3 className="card-title">Inspection Status</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={analytics.inspection_status}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="name" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
-                      <Tooltip contentStyle={{ background: "#1a2236", border: "1px solid #2d3a52" }} />
-                      <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Attendance Comparison */}
-                <div className="card chart-card">
-                  <h3 className="card-title">Attendance: Reported vs AI Detected</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={analytics.attendance_comparison}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="name" stroke="#64748b" tick={{ fontSize: 11 }} />
-                      <YAxis stroke="#64748b" />
-                      <Tooltip contentStyle={{ background: "#1a2236", border: "1px solid #2d3a52" }} />
-                      <Legend />
-                      <Bar dataKey="reported" name="Reported" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="actual" name="AI Detected" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Inspection Trend */}
-                <div className="card chart-card">
-                  <h3 className="card-title">Monthly Trend</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <LineChart data={analytics.inspection_trend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
-                      <Tooltip contentStyle={{ background: "#1a2236", border: "1px solid #2d3a52" }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="inspections" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
-                      <Line type="monotone" dataKey="complaints" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Complaint Categories + Alert Types */}
-                <div className="card chart-card">
-                  <h3 className="card-title">Complaint Categories</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={analytics.complaint_categories} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis type="number" stroke="#64748b" />
-                      <YAxis type="category" dataKey="name" stroke="#64748b" tick={{ fontSize: 11 }} width={120} />
-                      <Tooltip contentStyle={{ background: "#1a2236", border: "1px solid #2d3a52" }} />
-                      <Bar dataKey="value" fill="#f97316" radius={[0, 6, 6, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* CCTV Status */}
-                <div className="card chart-card">
-                  <h3 className="card-title">CCTV Status</h3>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie data={analytics.cctv_status} cx="50%" cy="50%"
-                        innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value">
-                        {analytics.cctv_status.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <Suspense fallback={<div className="loading-state"><div className="spinner" /><p>Loading charts...</p></div>}>
+                <AnalyticsSection analytics={analytics} />
+              </Suspense>
             )}
 
             {/* ── VIDEO CALLS ──────────────────────────────────── */}

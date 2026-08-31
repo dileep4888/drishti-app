@@ -1,9 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeProvider } from "./ThemeContext";
 import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
+
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+
+function Loader() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "var(--bg-primary)", color: "var(--text-muted)" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 32, height: 32, border: "3px solid var(--border)", borderTopColor: "var(--accent-orange)", borderRadius: "50%", animation: "spin 0.6s linear infinite", margin: "0 auto 12px" }} />
+        <p>Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppRoutes() {
   const [route, setRoute] = useState(window.location.hash.slice(1) || "/");
@@ -42,10 +54,10 @@ function AppRoutes() {
     return <Landing onNavigate={navigate} />;
   }
   if (route === "/login") {
-    return <Login onLogin={handleLogin} onNavigate={navigate} />;
+    return <Suspense fallback={<Loader />}><Login onLogin={handleLogin} onNavigate={navigate} /></Suspense>;
   }
   if (route === "/register") {
-    return <Register onLogin={handleLogin} onNavigate={navigate} />;
+    return <Suspense fallback={<Loader />}><Register onLogin={handleLogin} onNavigate={navigate} /></Suspense>;
   }
 
   // Protected: redirect to landing if not authenticated
@@ -54,7 +66,7 @@ function AppRoutes() {
     return null;
   }
 
-  return <Dashboard user={user} onLogout={handleLogout} onNavigate={navigate} />;
+  return <Suspense fallback={<Loader />}><Dashboard user={user} onLogout={handleLogout} onNavigate={navigate} /></Suspense>;
 }
 
 function App() {
