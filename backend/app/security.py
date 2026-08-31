@@ -6,8 +6,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
-from .database import get_firestore
+from .database import get_db
+from .models import User
 
 SECRET_KEY = os.getenv("SECRET_KEY", "drishti-dev-secret-key-change-in-production")
 ALGORITHM = "HS256"
@@ -32,8 +34,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Decode JWT and fetch user from Firestore."""
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -47,23 +48,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
 
-    db = get_firestore()
-    # Query users collection by email
-    users_ref = db.collection("users")
-    query = users_ref.where("email", "==", email).limit(1)
-    docs = list(query.stream())
-
-    if not docs:
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
         raise credentials_exception
-
-    user_data = docs[0].to_dict()
-    user_data["id"] = docs[0].id
-    return user_data
+    return user
 
 
 def require_role(*roles):
-    def role_checker(current_user=Depends(get_current_user)):
-        if current_user.get("role") not in roles:
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in roles:
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return current_user
     return role_checker

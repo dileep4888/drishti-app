@@ -1,69 +1,45 @@
-"""Dashboard API routes — all backed by Firestore."""
+"""Dashboard API routes — all backed by SQLAlchemy + MySQL."""
 import json
 import random
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy import func
 
-from ..database import get_firestore
-from ..models import COLLECTIONS, serialize_doc, now_utc
+from ..database import get_db
+from ..models import (
+    Institute, Inspection, Inspector, Alert, Complaint, CCTVDevice,
+    AttendanceRecord, Beneficiary, Evidence, VideoCall, RiskScore, User
+)
 from ..security import get_current_user
 
 router = APIRouter(prefix="/api", tags=["Dashboard API"])
 
 
-# ── Helpers ─────────────────────────────────────────────────────────────
-
-def _col(db, name):
-    return db.collection(name)
-
-
-def _get_all(db, collection_name, filters=None):
-    """Fetch all docs from a collection, optionally applying Firestore where clauses."""
-    ref = _col(db, collection_name)
-    query = ref
-    if filters:
-        for field, op, value in filters:
-            query = query.where(field, op, value)
-    return [serialize_doc({**doc.to_dict(), "id": doc.id}) for doc in query.stream()]
-
-
-def _get_doc(db, collection_name, doc_id):
-    doc = _col(db, collection_name).document(doc_id).get()
-    if not doc.exists:
-        return None
-    return serialize_doc({**doc.to_dict(), "id": doc.id})
-
-
-def _count_docs(db, collection_name, filters=None):
-    return len(_get_all(db, collection_name, filters))
-
-
 # ── Dashboard Stats ────────────────────────────────────────────────────
 
 @router.get("/stats")
-def get_stats(db=Depends(get_firestore), user=Depends(get_current_user)):
-    institutes = _get_all(db, "institutes")
-    cctv_devices = _get_all(db, "cctv_devices")
-    inspections = _get_all(db, "inspections")
-    alerts = _get_all(db, "alerts")
-    complaints = _get_all(db, "complaints")
-    beneficiaries = _get_all(db, "beneficiaries")
-
-    cctv_online = sum(1 for c in cctv_devices if c.get("status") == "online")
-    pending_inspections = sum(1 for i in inspections if i.get("status") == "pending")
-    completed_inspections = sum(1 for i in inspections if i.get("status") == "completed")
-    high_risk = sum(1 for i in institutes if (i.get("risk_score") or 0) >= 61)
-    medium_risk = sum(1 for i in institutes if 31 <= (i.get("risk_score") or 0) <= 60)
-    low_risk = sum(1 for i in institutes if (i.get("risk_score") or 0) <= 30)
-    unresolved_alerts = sum(1 for a in alerts if not a.get("is_resolved"))
-    pending_complaints = sum(1 for c in complaints if c.get("status") == "pending")
+def get_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    total_institutes = db.query(Institute).count()
+    total_cctv = db.query(CCTVDevice).count()
+    cctv_online = db.query(CCTVDevice).filter(CCTVDevice.status == "online").count()
+    total_inspections = db.query(Inspection).count()
+    pending_inspections = db.query(Inspection).filter(Inspection.status == "pending").count()
+    completed_inspections = db.query(Inspection).filter(Inspection.status == "completed").count()
+    high_risk = db.query(Institute).filter(Institute.risk_score >= 61).count()
+    medium_risk = db.query(Institute).filter(Institute.risk_score.between(31, 60)).count()
+    low_risk = db.query(Institute).filter(Institute.risk_score.between(0, 30)).count()
+    unresolved_alerts = db.query(Alert).filter(Alert.is_resolved == False).count()
+    total_complaints = db.query(Complaint).count()
+    pending_complaints = db.query(Complaint).filter(Complaint.status == "pending").count()
+    total_beneficiaries = db.query(Beneficiary).count()
 
     return {
-        "active_projects": len(institutes),
-        "total_institutes": len(institutes),
+        "active_projects": total_institutes,
+        "total_institutes": total_institutes,
         "live_cctv_cameras": cctv_online,
-        "total_cctv_cameras": len(cctv_devices),
-        "inspections_today": len(inspections),
+        "total_cctv_cameras": total_cctv,
+        "inspections_today": total_inspections,
         "pending_inspections": pending_inspections,
         "completed_inspections": completed_inspections,
         "high_risk_locations": high_risk,
@@ -71,9 +47,9 @@ def get_stats(db=Depends(get_firestore), user=Depends(get_current_user)):
         "low_risk_locations": low_risk,
         "anomalies_detected": unresolved_alerts,
         "unresolved_alerts": unresolved_alerts,
-        "total_complaints": len(complaints),
+        "total_complaints": total_complaints,
         "pending_complaints": pending_complaints,
-        "total_beneficiaries": len(beneficiaries),
+        "total_beneficiaries": total_beneficiaries,
     }
 
 
@@ -84,88 +60,94 @@ def get_institutes(
     risk_level: str | None = None,
     state: str | None = None,
     type: str | None = None,
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    filters = []
+    q = db.query(Institute)
     if risk_level:
-        filters.append(("risk_level", "==", risk_level))
+        q = q.filter(Institute.risk_level == risk_level)
     if state:
-        filters.append(("state", "==", state))
+        q = q.filter(Institute.state == state)
     if type:
-        filters.append(("type", "==", type))
+        q = q.filter(Institute.type == type)
 
-    institutes = _get_all(db, "institutes", filters if filters else None)
-    # Sort by risk_score desc
-    institutes.sort(key=lambda x: x.get("risk_score", 0), reverse=True)
-
-    # Enrich with counts
-    cctv_devices = _get_all(db, "cctv_devices")
-    complaints = _get_all(db, "complaints")
-    alerts = _get_all(db, "alerts")
-
-    cctv_by_institute = {}
-    for c in cctv_devices:
-        iid = c.get("institute_id")
-        if iid not in cctv_by_institute:
-            cctv_by_institute[iid] = {"online": 0, "total": 0}
-        cctv_by_institute[iid]["total"] += 1
-        if c.get("status") == "online":
-            cctv_by_institute[iid]["online"] += 1
-
-    complaint_counts = {}
-    for c in complaints:
-        iid = c.get("institute_id")
-        complaint_counts[iid] = complaint_counts.get(iid, 0) + 1
-
-    alert_counts = {}
-    for a in alerts:
-        if not a.get("is_resolved"):
-            iid = a.get("institute_id")
-            alert_counts[iid] = alert_counts.get(iid, 0) + 1
-
-    results = []
-    for inst in institutes:
-        iid = inst["id"]
-        cctv_info = cctv_by_institute.get(iid, {"online": 0, "total": 0})
-        results.append({
-            **inst,
-            "cctv_online": cctv_info["online"],
-            "cctv_total": cctv_info["total"],
-            "complaint_count": complaint_counts.get(iid, 0),
-            "active_alerts": alert_counts.get(iid, 0),
-        })
-
-    return results
+    institutes = q.order_by(Institute.risk_score.desc()).all()
+    return [_serialize_institute(i, db) for i in institutes]
 
 
 @router.get("/institutes/{institute_id}")
-def get_institute_detail(institute_id: str, user=Depends(get_current_user)):
-    db = get_firestore()
-    inst = _get_doc(db, "institutes", institute_id)
+def get_institute_detail(institute_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    inst = db.query(Institute).filter(Institute.id == institute_id).first()
     if not inst:
         raise HTTPException(status_code=404, detail="Institute not found")
 
-    # Get related data
-    cctv_devices = [c for c in _get_all(db, "cctv_devices") if c.get("institute_id") == institute_id]
-    inspections = [i for i in _get_all(db, "inspections") if i.get("institute_id") == institute_id]
-    complaints = [c for c in _get_all(db, "complaints") if c.get("institute_id") == institute_id]
-    alerts = [a for a in _get_all(db, "alerts") if a.get("institute_id") == institute_id]
-    attendance = [a for a in _get_all(db, "attendance_records") if a.get("institute_id") == institute_id]
-    beneficiaries = [b for b in _get_all(db, "beneficiaries") if b.get("institute_id") == institute_id]
+    data = _serialize_institute(inst, db)
+    data["cctv_devices"] = [
+        {"id": c.id, "name": c.name, "status": c.status, "people_detected": c.people_detected,
+         "is_recording": c.is_recording, "location": c.location_description}
+        for c in inst.cctv_devices
+    ]
+    data["inspections"] = [
+        {"id": i.id, "type": i.type, "status": i.status, "gps_verified": i.gps_verified,
+         "compliance_status": i.compliance_status, "created_at": i.created_at.isoformat() if i.created_at else None}
+        for i in inst.inspections[:10]
+    ]
+    data["complaints"] = [
+        {"id": c.id, "category": c.category, "description": c.description,
+         "status": c.status, "created_at": c.created_at.isoformat() if c.created_at else None}
+        for c in inst.complaints[:10]
+    ]
+    data["alerts"] = [
+        {"id": a.id, "type": a.type, "severity": a.severity, "title": a.title,
+         "is_resolved": a.is_resolved, "created_at": a.created_at.isoformat() if a.created_at else None}
+        for a in inst.alerts[:10]
+    ]
+    data["attendance_records"] = [
+        {"id": ar.id, "date": ar.date.isoformat() if ar.date else None,
+         "reported_count": ar.reported_count, "ai_detected_count": ar.ai_detected_count,
+         "discrepancy_percentage": ar.discrepancy_percentage}
+        for ar in inst.attendance_records[:10]
+    ]
+    data["beneficiaries"] = [
+        {"id": b.id, "name": b.name, "service_received": b.service_received,
+         "service_rating": b.service_rating}
+        for b in inst.beneficiaries[:10]
+    ]
+    return data
 
-    inst["cctv_devices"] = cctv_devices[:10]
-    inst["inspections"] = inspections[:10]
-    inst["complaints"] = complaints[:10]
-    inst["alerts"] = alerts[:10]
-    inst["attendance_records"] = attendance[:10]
-    inst["beneficiaries"] = beneficiaries[:10]
-    inst["cctv_online"] = sum(1 for c in cctv_devices if c.get("status") == "online")
-    inst["cctv_total"] = len(cctv_devices)
-    inst["complaint_count"] = len(complaints)
-    inst["active_alerts"] = sum(1 for a in alerts if not a.get("is_resolved"))
 
-    return inst
+def _serialize_institute(inst, db):
+    cctv_online = db.query(CCTVDevice).filter(
+        CCTVDevice.institute_id == inst.id, CCTVDevice.status == "online"
+    ).count()
+    cctv_total = db.query(CCTVDevice).filter(CCTVDevice.institute_id == inst.id).count()
+    complaint_count = db.query(Complaint).filter(Complaint.institute_id == inst.id).count()
+    alert_count = db.query(Alert).filter(
+        Alert.institute_id == inst.id, Alert.is_resolved == False
+    ).count()
+
+    return {
+        "id": inst.id,
+        "name": inst.name,
+        "type": inst.type,
+        "scheme": inst.scheme,
+        "state": inst.state,
+        "district": inst.district,
+        "address": inst.address,
+        "latitude": inst.latitude,
+        "longitude": inst.longitude,
+        "risk_score": inst.risk_score,
+        "risk_level": inst.risk_level,
+        "trust_score": inst.trust_score,
+        "reported_beneficiaries": inst.reported_beneficiaries,
+        "reported_staff": inst.reported_staff,
+        "status": inst.status,
+        "contact_person": inst.contact_person,
+        "cctv_online": cctv_online,
+        "cctv_total": cctv_total,
+        "complaint_count": complaint_count,
+        "active_alerts": alert_count,
+    }
 
 
 # ── Inspections ────────────────────────────────────────────────────────
@@ -174,76 +156,70 @@ def get_institute_detail(institute_id: str, user=Depends(get_current_user)):
 def get_inspections(
     status: str | None = None,
     type: str | None = None,
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    filters = []
+    q = db.query(Inspection)
     if status:
-        filters.append(("status", "==", status))
+        q = q.filter(Inspection.status == status)
     if type:
-        filters.append(("type", "==", type))
+        q = q.filter(Inspection.type == type)
 
-    inspections = _get_all(db, "inspections", filters if filters else None)
-
-    # Get institute and inspector names
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
-    inspectors = {i["id"]: i for i in _get_all(db, "inspectors")}
-
+    inspections = q.order_by(Inspection.created_at.desc()).all()
     results = []
     for insp in inspections:
-        inst = institutes.get(insp.get("institute_id"), {})
-        inspector = inspectors.get(insp.get("inspector_id"), {})
+        inst = db.query(Institute).filter(Institute.id == insp.institute_id).first()
+        inspector = db.query(Inspector).filter(Inspector.id == insp.inspector_id).first()
         results.append({
-            **insp,
-            "institute_name": inst.get("name", "Unknown"),
-            "institute_district": inst.get("district", ""),
-            "inspector_name": inspector.get("name", "Unassigned"),
-            "inspector_id": inspector.get("employee_id"),
+            "id": insp.id,
+            "institute_id": insp.institute_id,
+            "institute_name": inst.name if inst else "Unknown",
+            "institute_district": inst.district if inst else "",
+            "inspector_name": inspector.name if inspector else "Unassigned",
+            "inspector_id": inspector.employee_id if inspector else None,
+            "type": insp.type,
+            "status": insp.status,
+            "gps_verified": insp.gps_verified,
+            "compliance_status": insp.compliance_status,
+            "notes": insp.notes,
+            "created_at": insp.created_at.isoformat() if insp.created_at else None,
+            "completed_date": insp.completed_date.isoformat() if insp.completed_date else None,
         })
-
     return results
 
 
 @router.post("/inspections/{inspection_id}/assign-random")
-def assign_random_inspector(inspection_id: str, user=Depends(get_current_user)):
-    db = get_firestore()
-    insp_doc = _col(db, "inspections").document(inspection_id).get()
-    if not insp_doc.exists:
+def assign_random_inspector(inspection_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    inspection = db.query(Inspection).filter(Inspection.id == inspection_id).first()
+    if not inspection:
         raise HTTPException(status_code=404, detail="Inspection not found")
-
-    insp_data = insp_doc.to_dict()
-    if insp_data.get("inspector_id"):
+    if inspection.inspector_id:
         raise HTTPException(status_code=400, detail="Inspector already assigned")
 
-    # Get available inspectors
-    inspectors = _get_all(db, "inspectors")
-    available = [i for i in inspectors if i.get("is_available")]
+    recent_inspector_ids = [
+        i.inspector_id for i in db.query(Inspection).filter(
+            Inspection.institute_id == inspection.institute_id,
+            Inspection.inspector_id.isnot(None),
+        ).order_by(Inspection.created_at.desc()).limit(3).all()
+    ]
+
+    available = db.query(Inspector).filter(
+        Inspector.is_available == True,
+        Inspector.id.notin_(recent_inspector_ids) if recent_inspector_ids else True,
+    ).all()
+
+    if not available:
+        available = db.query(Inspector).filter(Inspector.is_available == True).all()
     if not available:
         raise HTTPException(status_code=404, detail="No available inspectors")
 
-    # Avoid recent inspectors for this institute
-    all_inspections = _get_all(db, "inspections")
-    recent_ids = set()
-    for inv in all_inspections:
-        if inv.get("institute_id") == insp_data.get("institute_id") and inv.get("inspector_id"):
-            recent_ids.add(inv["inspector_id"])
+    chosen = random.choice(available)
+    inspection.inspector_id = chosen.id
+    inspection.status = "pending"
+    chosen.current_load += 1
+    db.commit()
 
-    non_recent = [i for i in available if i["id"] not in recent_ids]
-    pool = non_recent if non_recent else available
-    chosen = random.choice(pool)
-
-    # Update inspection
-    _col(db, "inspections").document(inspection_id).update({
-        "inspector_id": chosen["id"],
-        "status": "pending",
-    })
-
-    # Update inspector load
-    _col(db, "inspectors").document(chosen["id"]).update({
-        "current_load": (chosen.get("current_load") or 0) + 1,
-    })
-
-    return {"message": f"Inspector {chosen['name']} ({chosen.get('employee_id')}) assigned", "inspector_id": chosen["id"]}
+    return {"message": f"Inspector {chosen.name} ({chosen.employee_id}) assigned", "inspector_id": chosen.id}
 
 
 # ── Alerts ─────────────────────────────────────────────────────────────
@@ -252,41 +228,42 @@ def assign_random_inspector(inspection_id: str, user=Depends(get_current_user)):
 def get_alerts(
     severity: str | None = None,
     resolved: bool | None = None,
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    filters = []
+    q = db.query(Alert)
     if severity:
-        filters.append(("severity", "==", severity))
+        q = q.filter(Alert.severity == severity)
     if resolved is not None:
-        filters.append(("is_resolved", "==", resolved))
+        q = q.filter(Alert.is_resolved == resolved)
 
-    alerts = _get_all(db, "alerts", filters if filters else None)
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
-
+    alerts = q.order_by(Alert.created_at.desc()).all()
     results = []
     for a in alerts:
-        inst = institutes.get(a.get("institute_id"), {})
+        inst = db.query(Institute).filter(Institute.id == a.institute_id).first()
         results.append({
-            **a,
-            "institute_name": inst.get("name", "System"),
+            "id": a.id,
+            "institute_id": a.institute_id,
+            "institute_name": inst.name if inst else "System",
+            "type": a.type,
+            "severity": a.severity,
+            "title": a.title,
+            "message": a.message,
+            "is_resolved": a.is_resolved,
+            "created_at": a.created_at.isoformat() if a.created_at else None,
         })
-
     return results
 
 
 @router.post("/alerts/{alert_id}/resolve")
-def resolve_alert(alert_id: str, user=Depends(get_current_user)):
-    db = get_firestore()
-    doc = _col(db, "alerts").document(alert_id).get()
-    if not doc.exists:
+def resolve_alert(alert_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    alert = db.query(Alert).filter(Alert.id == alert_id).first()
+    if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
-
-    _col(db, "alerts").document(alert_id).update({
-        "is_resolved": True,
-        "resolved_at": now_utc(),
-        "resolved_by": user.get("name", "Admin"),
-    })
+    alert.is_resolved = True
+    alert.resolved_at = datetime.now(timezone.utc)
+    alert.resolved_by = user.name
+    db.commit()
     return {"message": "Alert resolved"}
 
 
@@ -295,19 +272,28 @@ def resolve_alert(alert_id: str, user=Depends(get_current_user)):
 @router.get("/cctv")
 def get_cctv_devices(
     status: str | None = None,
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    filters = [("status", "==", status)] if status else None
-    devices = _get_all(db, "cctv_devices", filters)
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
+    q = db.query(CCTVDevice)
+    if status:
+        q = q.filter(CCTVDevice.status == status)
 
+    devices = q.all()
     results = []
     for d in devices:
-        inst = institutes.get(d.get("institute_id"), {})
+        inst = db.query(Institute).filter(Institute.id == d.institute_id).first()
         results.append({
-            **d,
-            "institute_name": inst.get("name", "Unknown"),
+            "id": d.id,
+            "institute_id": d.institute_id,
+            "institute_name": inst.name if inst else "Unknown",
+            "name": d.name,
+            "status": d.status,
+            "people_detected": d.people_detected,
+            "is_recording": d.is_recording,
+            "location": d.location_description,
+            "rtsp_url": d.rtsp_url,
+            "last_online": d.last_online.isoformat() if d.last_online else None,
         })
     return results
 
@@ -318,24 +304,30 @@ def get_cctv_devices(
 def get_complaints(
     category: str | None = None,
     status: str | None = None,
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    filters = []
+    q = db.query(Complaint)
     if category:
-        filters.append(("category", "==", category))
+        q = q.filter(Complaint.category == category)
     if status:
-        filters.append(("status", "==", status))
+        q = q.filter(Complaint.status == status)
 
-    complaints = _get_all(db, "complaints", filters if filters else None)
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
-
+    complaints = q.order_by(Complaint.created_at.desc()).all()
     results = []
     for c in complaints:
-        inst = institutes.get(c.get("institute_id"), {})
+        inst = db.query(Institute).filter(Institute.id == c.institute_id).first()
         results.append({
-            **c,
-            "institute_name": inst.get("name", "Unknown"),
+            "id": c.id,
+            "institute_id": c.institute_id,
+            "institute_name": inst.name if inst else "Unknown",
+            "beneficiary_name": c.beneficiary_name,
+            "category": c.category,
+            "description": c.description,
+            "status": c.status,
+            "ai_category": c.ai_category,
+            "is_anonymous": c.is_anonymous,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
         })
     return results
 
@@ -343,72 +335,53 @@ def get_complaints(
 # ── Analytics ──────────────────────────────────────────────────────────
 
 @router.get("/analytics")
-def get_analytics(user=Depends(get_current_user)):
-    db = get_firestore()
-    institutes = _get_all(db, "institutes")
-    inspections = _get_all(db, "inspections")
-    complaints = _get_all(db, "complaints")
-    alerts = _get_all(db, "alerts")
-    cctv_devices = _get_all(db, "cctv_devices")
-    attendance_records = _get_all(db, "attendance_records")
-
-    # Risk distribution
+def get_analytics(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     risk_dist = [
-        {"name": "Low Risk", "value": sum(1 for i in institutes if i.get("risk_level") == "low"), "color": "#22c55e"},
-        {"name": "Medium Risk", "value": sum(1 for i in institutes if i.get("risk_level") == "medium"), "color": "#eab308"},
-        {"name": "High Risk", "value": sum(1 for i in institutes if i.get("risk_level") == "high"), "color": "#ef4444"},
-        {"name": "Critical", "value": sum(1 for i in institutes if i.get("risk_level") == "critical"), "color": "#7c2d12"},
+        {"name": "Low Risk", "value": db.query(Institute).filter(Institute.risk_level == "low").count(), "color": "#22c55e"},
+        {"name": "Medium Risk", "value": db.query(Institute).filter(Institute.risk_level == "medium").count(), "color": "#eab308"},
+        {"name": "High Risk", "value": db.query(Institute).filter(Institute.risk_level == "high").count(), "color": "#ef4444"},
+        {"name": "Critical", "value": db.query(Institute).filter(Institute.risk_level == "critical").count(), "color": "#7c2d12"},
     ]
 
-    # Inspection status
     insp_status = [
-        {"name": "Pending", "value": sum(1 for i in inspections if i.get("status") == "pending")},
-        {"name": "In Progress", "value": sum(1 for i in inspections if i.get("status") == "in_progress")},
-        {"name": "Completed", "value": sum(1 for i in inspections if i.get("status") == "completed")},
-        {"name": "Cancelled", "value": sum(1 for i in inspections if i.get("status") == "cancelled")},
+        {"name": "Pending", "value": db.query(Inspection).filter(Inspection.status == "pending").count()},
+        {"name": "In Progress", "value": db.query(Inspection).filter(Inspection.status == "in_progress").count()},
+        {"name": "Completed", "value": db.query(Inspection).filter(Inspection.status == "completed").count()},
+        {"name": "Cancelled", "value": db.query(Inspection).filter(Inspection.status == "cancelled").count()},
     ]
 
-    # Complaint categories
-    cat_counts = {}
-    for c in complaints:
-        cat = c.get("category", "other")
-        cat_counts[cat] = cat_counts.get(cat, 0) + 1
-    complaint_cats = [{"name": k, "value": v} for k, v in cat_counts.items()]
+    complaint_cats = db.query(
+        Complaint.category, func.count(Complaint.id)
+    ).group_by(Complaint.category).all()
 
-    # Alert types
-    type_counts = {}
-    for a in alerts:
-        t = a.get("type", "unknown")
-        type_counts[t] = type_counts.get(t, 0) + 1
-    alert_types = [{"name": k, "value": v} for k, v in type_counts.items()]
+    alert_types = db.query(
+        Alert.type, func.count(Alert.id)
+    ).group_by(Alert.type).all()
 
-    # Monthly trend (mock)
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
     inspection_trend = [
         {"month": m, "inspections": random.randint(20, 80), "complaints": random.randint(5, 25)}
         for m in months
     ]
 
-    # Attendance comparison
-    inst_map = {i["id"]: i for i in institutes}
+    attendance = db.query(AttendanceRecord).all()
     attendance_comparison = []
-    for a in attendance_records:
-        inst = inst_map.get(a.get("institute_id"), {})
+    for a in attendance:
+        inst = db.query(Institute).filter(Institute.id == a.institute_id).first()
         attendance_comparison.append({
-            "name": inst.get("name", "Unknown")[:15],
-            "reported": a.get("reported_count", 0),
-            "actual": a.get("ai_detected_count", 0),
+            "name": inst.name[:15] if inst else "Unknown",
+            "reported": a.reported_count,
+            "actual": a.ai_detected_count,
         })
 
-    # CCTV status
-    cctv_online = sum(1 for c in cctv_devices if c.get("status") == "online")
-    cctv_offline = sum(1 for c in cctv_devices if c.get("status") == "offline")
+    cctv_online = db.query(CCTVDevice).filter(CCTVDevice.status == "online").count()
+    cctv_offline = db.query(CCTVDevice).filter(CCTVDevice.status == "offline").count()
 
     return {
         "risk_distribution": risk_dist,
         "inspection_status": insp_status,
-        "complaint_categories": complaint_cats,
-        "alert_types": alert_types,
+        "complaint_categories": [{"name": c[0], "value": c[1]} for c in complaint_cats],
+        "alert_types": [{"name": a[0], "value": a[1]} for a in alert_types],
         "inspection_trend": inspection_trend,
         "attendance_comparison": attendance_comparison,
         "cctv_status": [
@@ -421,103 +394,105 @@ def get_analytics(user=Depends(get_current_user)):
 # ── Risk Map ───────────────────────────────────────────────────────────
 
 @router.get("/risk-map")
-def get_risk_map(user=Depends(get_current_user)):
-    db = get_firestore()
-    institutes = _get_all(db, "institutes")
+def get_risk_map(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    institutes = db.query(Institute).filter(
+        Institute.latitude.isnot(None), Institute.longitude.isnot(None)
+    ).all()
     return [
         {
-            "id": i["id"],
-            "name": i.get("name"),
-            "type": i.get("type"),
-            "lat": i.get("latitude"),
-            "lng": i.get("longitude"),
-            "risk_score": i.get("risk_score", 0),
-            "risk_level": i.get("risk_level", "low"),
-            "trust_score": i.get("trust_score", 100),
-            "district": i.get("district"),
+            "id": i.id,
+            "name": i.name,
+            "type": i.type,
+            "lat": i.latitude,
+            "lng": i.longitude,
+            "risk_score": i.risk_score,
+            "risk_level": i.risk_level,
+            "trust_score": i.trust_score,
+            "district": i.district,
         }
         for i in institutes
-        if i.get("latitude") and i.get("longitude")
     ]
 
 
 # ── Video Calls ────────────────────────────────────────────────────────
 
 @router.get("/video-calls")
-def get_video_calls(user=Depends(get_current_user)):
-    db = get_firestore()
-    calls = _get_all(db, "video_calls")
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
-
+def get_video_calls(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    calls = db.query(VideoCall).order_by(VideoCall.created_at.desc()).all()
     results = []
     for vc in calls:
-        inst = institutes.get(vc.get("institute_id"), {})
+        inst = db.query(Institute).filter(Institute.id == vc.institute_id).first()
         results.append({
-            **vc,
-            "institute_name": inst.get("name", "Unknown"),
+            "id": vc.id,
+            "institute_id": vc.institute_id,
+            "institute_name": inst.name if inst else "Unknown",
+            "initiated_by": vc.initiated_by,
+            "called_person": vc.called_person,
+            "role": vc.role,
+            "status": vc.status,
+            "scheduled_time": vc.scheduled_time.isoformat() if vc.scheduled_time else None,
+            "started_at": vc.started_at.isoformat() if vc.started_at else None,
+            "ended_at": vc.ended_at.isoformat() if vc.ended_at else None,
+            "duration_seconds": vc.duration_seconds,
+            "location_verified": vc.location_verified,
+            "notes": vc.notes,
         })
     return results
 
 
 @router.post("/video-calls/initiate")
 def initiate_vc(
-    institute_id: str,
+    institute_id: int,
     called_person: str,
     role: str = "project_incharge",
-    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    db = get_firestore()
-    vc_data = {
-        "institute_id": institute_id,
-        "initiated_by": user.get("name", "Admin"),
-        "called_person": called_person,
-        "role": role,
-        "status": "in_progress",
-        "started_at": now_utc(),
-        "created_at": now_utc(),
-    }
-    _, doc_ref = _col(db, "video_calls").add(vc_data)
-    return {"message": "Video call initiated", "call_id": doc_ref.id}
+    vc = VideoCall(
+        institute_id=institute_id,
+        initiated_by=user.name,
+        called_person=called_person,
+        role=role,
+        status="in_progress",
+        started_at=datetime.now(timezone.utc),
+    )
+    db.add(vc)
+    db.commit()
+    db.refresh(vc)
+    return {"message": "Video call initiated", "call_id": vc.id}
 
 
 @router.post("/video-calls/{call_id}/end")
-def end_vc(call_id: str, notes: str = "", user=Depends(get_current_user)):
-    db = get_firestore()
-    doc = _col(db, "video_calls").document(call_id).get()
-    if not doc.exists:
+def end_vc(call_id: int, notes: str = "", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    vc = db.query(VideoCall).filter(VideoCall.id == call_id).first()
+    if not vc:
         raise HTTPException(status_code=404, detail="Video call not found")
-
-    data = doc.to_dict()
-    ended_at = now_utc()
-    started_at = data.get("started_at")
-    duration = 0
-    if started_at:
-        if hasattr(started_at, "timestamp"):
-            duration = int((ended_at - started_at).total_seconds())
-
-    _col(db, "video_calls").document(call_id).update({
-        "ended_at": ended_at,
-        "status": "completed",
-        "notes": notes,
-        "duration_seconds": duration,
-    })
-    return {"message": "Call ended", "duration": duration}
+    vc.ended_at = datetime.now(timezone.utc)
+    vc.status = "completed"
+    vc.notes = notes
+    if vc.started_at:
+        vc.duration_seconds = int((vc.ended_at - vc.started_at).total_seconds())
+    db.commit()
+    return {"message": "Call ended", "duration": vc.duration_seconds}
 
 
 # ── Beneficiaries ──────────────────────────────────────────────────────
 
 @router.get("/beneficiaries")
-def get_beneficiaries(user=Depends(get_current_user)):
-    db = get_firestore()
-    bens = _get_all(db, "beneficiaries")
-    institutes = {i["id"]: i for i in _get_all(db, "institutes")}
-
+def get_beneficiaries(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    bens = db.query(Beneficiary).all()
     results = []
     for b in bens:
-        inst = institutes.get(b.get("institute_id"), {})
+        inst = db.query(Institute).filter(Institute.id == b.institute_id).first()
         results.append({
-            **b,
-            "institute_name": inst.get("name", "Unknown"),
+            "id": b.id,
+            "institute_id": b.institute_id,
+            "institute_name": inst.name if inst else "Unknown",
+            "name": b.name,
+            "service_received": b.service_received,
+            "service_rating": b.service_rating,
+            "feedback": b.feedback,
+            "attendance_confirmed": b.attendance_confirmed,
         })
     return results
 
@@ -525,53 +500,34 @@ def get_beneficiaries(user=Depends(get_current_user)):
 # ── Predictive Inspection ──────────────────────────────────────────────
 
 @router.get("/predictive-inspections")
-def get_predictive_inspections(user=Depends(get_current_user)):
-    db = get_firestore()
-    institutes = _get_all(db, "institutes")
-    institutes.sort(key=lambda x: x.get("risk_score", 0), reverse=True)
-
-    cctv_devices = _get_all(db, "cctv_devices")
-    complaints = _get_all(db, "complaints")
-    attendance_records = _get_all(db, "attendance_records")
-
-    offline_cctv_count = {}
-    for c in cctv_devices:
-        if c.get("status") == "offline":
-            iid = c.get("institute_id")
-            offline_cctv_count[iid] = offline_cctv_count.get(iid, 0) + 1
-
-    complaint_count = {}
-    for c in complaints:
-        iid = c.get("institute_id")
-        complaint_count[iid] = complaint_count.get(iid, 0) + 1
-
-    attendance_by_inst = {}
-    for a in attendance_records:
-        iid = a.get("institute_id")
-        if iid not in attendance_by_inst or a.get("created_at", "") > attendance_by_inst[iid].get("created_at", ""):
-            attendance_by_inst[iid] = a
-
+def get_predictive_inspections(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    institutes = db.query(Institute).order_by(Institute.risk_score.desc()).limit(5).all()
     results = []
-    for inst in institutes[:5]:
+    for inst in institutes:
         reasons = []
-        iid = inst["id"]
-        if (inst.get("risk_score") or 0) >= 61:
+        if inst.risk_score >= 61:
             reasons.append("High risk score")
-        if offline_cctv_count.get(iid, 0) > 0:
-            reasons.append(f"{offline_cctv_count[iid]} CCTV cameras offline")
-        if complaint_count.get(iid, 0) > 3:
-            reasons.append(f"{complaint_count[iid]} complaints received")
-        latest_att = attendance_by_inst.get(iid)
-        if latest_att and (latest_att.get("discrepancy_percentage") or 0) > 30:
-            reasons.append(f"Attendance discrepancy: {latest_att['discrepancy_percentage']:.0f}%")
+        offline_cctv = db.query(CCTVDevice).filter(
+            CCTVDevice.institute_id == inst.id, CCTVDevice.status == "offline"
+        ).count()
+        if offline_cctv > 0:
+            reasons.append(f"{offline_cctv} CCTV cameras offline")
+        complaint_count = db.query(Complaint).filter(Complaint.institute_id == inst.id).count()
+        if complaint_count > 3:
+            reasons.append(f"{complaint_count} complaints received")
+        latest_attendance = db.query(AttendanceRecord).filter(
+            AttendanceRecord.institute_id == inst.id
+        ).order_by(AttendanceRecord.created_at.desc()).first()
+        if latest_attendance and latest_attendance.discrepancy_percentage > 30:
+            reasons.append(f"Attendance discrepancy: {latest_attendance.discrepancy_percentage:.0f}%")
 
         results.append({
-            "institute_id": iid,
-            "institute_name": inst.get("name"),
-            "risk_score": inst.get("risk_score", 0),
-            "risk_level": inst.get("risk_level", "low"),
-            "trust_score": inst.get("trust_score", 100),
-            "priority": "HIGH" if (inst.get("risk_score") or 0) >= 61 else "MEDIUM" if (inst.get("risk_score") or 0) >= 31 else "LOW",
+            "institute_id": inst.id,
+            "institute_name": inst.name,
+            "risk_score": inst.risk_score,
+            "risk_level": inst.risk_level,
+            "trust_score": inst.trust_score,
+            "priority": "HIGH" if inst.risk_score >= 61 else "MEDIUM" if inst.risk_score >= 31 else "LOW",
             "reasons": reasons or ["Scheduled periodic inspection"],
         })
     return results

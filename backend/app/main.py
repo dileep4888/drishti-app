@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .database import get_firestore
+from .database import engine, Base
 from .routes.auth import router as auth_router
 from .routes.dashboard_api import router as dashboard_router
 
@@ -13,20 +13,33 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app):
-    # On startup: seed Firestore with demo data if empty
+    # On startup: recreate tables and seed if needed.
+    from sqlalchemy import text
+    from .database import SessionLocal
+    from .models import User
+
+    is_mysql = str(engine.url).startswith("mysql")
+
+    with engine.begin() as conn:
+        if is_mysql:
+            conn.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(text(f"DROP TABLE IF EXISTS {table.name}"))
+        if is_mysql:
+            conn.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+
+    Base.metadata.create_all(bind=engine)
+    logger.info("Tables created.")
+
+    db = SessionLocal()
     try:
-        db = get_firestore()
-        existing_users = list(db.collection("users").limit(1).stream())
-        if not existing_users:
-            logger.info("Seeding demo data into Firestore...")
+        if not db.query(User).first():
+            logger.info("Seeding demo data...")
             from .seed import seed
             seed()
             logger.info("Seed complete.")
-        else:
-            logger.info("Firestore already has data, skipping seed.")
-    except Exception as e:
-        logger.warning(f"Firestore startup check failed: {e}")
-        logger.info("Continuing without seed — add FIREBASE_CREDENTIALS env var.")
+    finally:
+        db.close()
 
     yield
 
@@ -38,7 +51,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow all origins for dev/demo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,7 +59,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
 app.include_router(auth_router)
 app.include_router(dashboard_router)
 
@@ -58,7 +69,7 @@ def root():
         "name": "DRISHTI AI",
         "full_name": "Digital Real-time Intelligent Surveillance, Tracking & Inspection System",
         "version": "2.0.0",
-        "backend": "Firebase Firestore",
+        "backend": "MySQL + SQLAlchemy",
         "docs": "/docs",
         "status": "operational",
     }
@@ -66,4 +77,4 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "database": "firestore"}
+    return {"status": "healthy", "database": "mysql"}

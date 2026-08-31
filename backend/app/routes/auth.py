@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 
-from ..database import get_firestore
+from ..database import get_db
+from ..models import User
 from ..security import verify_password, get_password_hash, create_access_token
-from ..models import now_utc
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -20,7 +21,7 @@ class RegisterRequest(BaseModel):
 
 
 class RegisterResponse(BaseModel):
-    id: str
+    id: int
     name: str
     email: str
     role: str
@@ -28,7 +29,7 @@ class RegisterResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    id: str
+    id: int
     name: str
     email: str
     role: str
@@ -36,53 +37,37 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/register", response_model=RegisterResponse)
-def register(req: RegisterRequest):
-    db = get_firestore()
-    users_ref = db.collection("users")
-
-    # Check if email already exists
-    existing = list(users_ref.where("email", "==", req.email).limit(1).stream())
+def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user_data = {
-        "name": req.name,
-        "email": req.email,
-        "hashed_password": get_password_hash(req.password),
-        "role": req.role,
-        "phone": req.phone,
-        "state": req.state,
-        "district": req.district,
-        "is_active": True,
-        "created_at": now_utc(),
-    }
+    user = User(
+        name=req.name,
+        email=req.email,
+        hashed_password=get_password_hash(req.password),
+        role=req.role,
+        phone=req.phone,
+        state=req.state,
+        district=req.district,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
-    _, doc_ref = users_ref.add(user_data)
-
-    token = create_access_token(data={"sub": req.email})
+    token = create_access_token(data={"sub": user.email})
     return RegisterResponse(
-        id=doc_ref.id, name=req.name, email=req.email, role=req.role, access_token=token
+        id=user.id, name=user.name, email=user.email, role=user.role, access_token=token
     )
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(form: OAuth2PasswordRequestForm = Depends()):
-    db = get_firestore()
-    users_ref = db.collection("users")
-    query = users_ref.where("email", "==", form.username).limit(1)
-    docs = list(query.stream())
-
-    if not docs:
+def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form.username).first()
+    if not user or not verify_password(form.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    user_doc = docs[0]
-    user_data = user_doc.to_dict()
-
-    if not verify_password(form.password, user_data["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    token = create_access_token(data={"sub": form.username})
+    token = create_access_token(data={"sub": user.email})
     return LoginResponse(
-        id=user_doc.id, name=user_data["name"], email=user_data["email"],
-        role=user_data["role"], access_token=token,
+        id=user.id, name=user.name, email=user.email, role=user.role, access_token=token
     )
