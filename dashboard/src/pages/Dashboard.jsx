@@ -113,6 +113,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const [instituteDetail, setInstituteDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Load data for active tab
   useEffect(() => {
@@ -218,8 +219,11 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         <VideoCallModal roomName={videoCallRoom} displayName={user.name} onClose={() => setVideoCallRoom(null)} />
       )}
 
+      {/* Mobile Overlay */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-brand">
           <span className="brand-icon">👁</span>
           <div>
@@ -268,6 +272,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       {/* Main Content */}
       <main className="main-content">
         <header className="main-header">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
           <div>
             <div className="header-top-row">
               <h1 className="page-title">
@@ -298,9 +303,14 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         </header>
 
         {loading ? (
-          <div className="loading-state">
-            <div className="spinner" />
-            <p>Loading data...</p>
+          <div className="content-area">
+            <div className="stats-grid">
+              {[1,2,3,4,5,6,7,8].map((i) => <div key={i} className="skeleton skeleton-stat" />)}
+            </div>
+            <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem"}}>
+              <div className="skeleton skeleton-card" />
+              <div className="skeleton skeleton-card" />
+            </div>
           </div>
         ) : (
           <div className="content-area">

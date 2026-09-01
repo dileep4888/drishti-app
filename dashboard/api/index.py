@@ -298,18 +298,21 @@ def seed():
     if db.query(User).filter(User.email == "dileepbairwa48@gmail.com").first():
         db.close()
         return
+    # Pre-computed bcrypt hashes (avoids slow bcrypt on cold start)
+    _ADMIN_HASH = "$2b$12$FFvL7YIeAjb12mYJZhiVPexj4UFcP9q7Q9iRVqJd/Yb5kzmpn6.5K"
+    _DEMO_HASH = "$2b$12$J2MnJWiFc0D22KXUS1cRserFXju4kmBBa55rYJxkeYs9jX897BhrG"
     users = [
         User(name="Dileep Bairwa", email="dileepbairwa48@gmail.com",
-             hashed_password=get_password_hash("highxgamer"), role="super_admin",
+             hashed_password=_ADMIN_HASH, role="super_admin",
              state="Rajasthan", district="Jaipur"),
         User(name="Priya Sharma", email="priya@demo.com",
-             hashed_password=get_password_hash("demo1234"), role="department_official",
+             hashed_password=_DEMO_HASH, role="department_official",
              state="Rajasthan", district="Jaipur"),
         User(name="Rahul Verma", email="rahul@demo.com",
-             hashed_password=get_password_hash("demo1234"), role="inspector",
+             hashed_password=_DEMO_HASH, role="inspector",
              state="Rajasthan", district="Jaipur"),
         User(name="Anita Devi", email="anita@demo.com",
-             hashed_password=get_password_hash("demo1234"), role="state_authority",
+             hashed_password=_DEMO_HASH, role="state_authority",
              state="Rajasthan"),
     ]
     db.add_all(users)
