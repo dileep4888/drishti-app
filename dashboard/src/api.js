@@ -2,14 +2,16 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("drishti_token");
-  const headers = {
-    "Content-Type": options.isForm ? undefined : "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
-
-  // For form data (login), don't set Content-Type — let browser set multipart boundary
-  if (options.isForm) delete headers["Content-Type"];
+  const headers = {};
+  if (!options.isForm) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  if (options.headers) {
+    Object.assign(headers, options.headers);
+  }
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
