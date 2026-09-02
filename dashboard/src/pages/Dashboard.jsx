@@ -249,10 +249,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <span className="brand-icon">👁</span>
+          <img src="/drishti-logo.svg" alt="DRISHTI" className="brand-icon-img" />
           <div>
-            <div className="brand-name">DRISHTI AI</div>
-            <div className="brand-sub">Surveillance System</div>
+            <div className="brand-name">DRISHTI</div>
+            <div className="brand-sub">AI SYSTEM</div>
           </div>
         </div>
 

@@ -9,9 +9,12 @@ export default function Landing({ onNavigate }) {
       {/* Navbar */}
       <nav className="landing-nav">
         <div className="landing-nav-inner">
-          <div className="landing-brand">
-            <span className="landing-brand-icon">👁</span>
-            <span className="landing-brand-text">DRISHTI AI</span>
+          <div className="landing-brand" onClick={() => onNavigate("/")}>
+            <img src="/drishti-logo.svg" alt="DRISHTI" className="landing-brand-logo" />
+            <div className="landing-brand-text">
+              <span className="brand-name">DRISHTI</span>
+              <span className="brand-tagline">AI SYSTEM</span>
+            </div>
           </div>
           <div className="landing-nav-links">
             <a href="#features">Features</a>
@@ -21,7 +24,7 @@ export default function Landing({ onNavigate }) {
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
             <button className="nav-cta" onClick={() => onNavigate("/login")}>
-              Sign In
+              Sign In →
             </button>
           </div>
         </div>
@@ -32,11 +35,12 @@ export default function Landing({ onNavigate }) {
         <div className="hero-bg">
           <div className="hero-grid" />
           <div className="hero-glow" />
+          <div className="hero-glow-2" />
         </div>
         <div className="hero-content">
           <div className="hero-badge">
             <span className="badge-dot" />
-            Government of India — Smart Automation
+            Government of India — Ministry of Social Justice & Empowerment
           </div>
           <h1 className="hero-title">
             <span className="hero-title-line">Digital Real-time</span>
@@ -44,34 +48,71 @@ export default function Landing({ onNavigate }) {
             <span className="hero-title-line">Tracking & Inspection</span>
           </h1>
           <p className="hero-desc">
-            DRISHTI AI is a centralized monitoring platform for the Ministry of Social Justice &
-            Empowerment. Powered by AI analytics, live CCTV intelligence, and automated inspection
-            assignment to ensure transparent, evidence-driven governance.
+            AI-powered centralized monitoring platform eliminating fraud, automating inspections,
+            and ensuring transparent governance across all social welfare institutes.
           </p>
           <div className="hero-actions">
             <button className="btn-primary-lg" onClick={() => onNavigate("/login")}>
-              Access Dashboard →
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Access Dashboard
             </button>
             <button className="btn-outline-lg" onClick={() => onNavigate("/register")}>
-              Create Account
+              Register Now
             </button>
           </div>
           <div className="hero-stats">
             <div className="hero-stat">
-              <span className="hero-stat-val">10+</span>
-              <span className="hero-stat-lbl">Institutes Monitored</span>
+              <span className="hero-stat-val">1,245</span>
+              <span className="hero-stat-lbl">Active Projects</span>
             </div>
+            <div className="hero-stat-divider" />
             <div className="hero-stat">
-              <span className="hero-stat-val">30+</span>
+              <span className="hero-stat-val">3,450</span>
               <span className="hero-stat-lbl">CCTV Cameras</span>
             </div>
+            <div className="hero-stat-divider" />
             <div className="hero-stat">
-              <span className="hero-stat-val">7</span>
+              <span className="hero-stat-val">28</span>
               <span className="hero-stat-lbl">States Covered</span>
             </div>
+            <div className="hero-stat-divider" />
             <div className="hero-stat">
               <span className="hero-stat-val">24/7</span>
               <span className="hero-stat-lbl">Real-time Monitoring</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Score Visual */}
+      <section className="trust-section">
+        <div className="section-inner">
+          <div className="trust-banner">
+            <div className="trust-left">
+              <div className="trust-logo-large">
+                <img src="/drishti-logo.svg" alt="DRISHTI AI" />
+              </div>
+              <div>
+                <h2 className="trust-title">DRISHTI AI Trust Score</h2>
+                <p className="trust-desc">Dynamic AI-powered trust evaluation for every institute in the nation</p>
+              </div>
+            </div>
+            <div className="trust-cards">
+              <div className="trust-card good">
+                <div className="trust-card-score">82<span>/100</span></div>
+                <div className="trust-card-name">CRY Child Rights</div>
+                <div className="trust-card-status">🟢 Reliable</div>
+              </div>
+              <div className="trust-card warn">
+                <div className="trust-card-score">42<span>/100</span></div>
+                <div className="trust-card-name">HelpAge India</div>
+                <div className="trust-card-status">🟡 Medium Risk</div>
+              </div>
+              <div className="trust-card danger">
+                <div className="trust-card-score">20<span>/100</span></div>
+                <div className="trust-card-name">Smile Foundation</div>
+                <div className="trust-card-status">🔴 High Risk</div>
+              </div>
             </div>
           </div>
         </div>
@@ -148,39 +189,29 @@ export default function Landing({ onNavigate }) {
                 projects, NGOs, and social welfare institutes across the country.
               </p>
               <div className="about-points">
-                <div className="about-point">
-                  <span className="point-check">✓</span>
-                  <span>Eliminate fake attendance and proxy staff reports</span>
-                </div>
-                <div className="about-point">
-                  <span className="point-check">✓</span>
-                  <span>Automate inspector assignment with conflict avoidance</span>
-                </div>
-                <div className="about-point">
-                  <span className="point-check">✓</span>
-                  <span>AI-powered anomaly detection across all institutes</span>
-                </div>
-                <div className="about-point">
-                  <span className="point-check">✓</span>
-                  <span>Tamper-proof geo-tagged evidence collection</span>
-                </div>
-                <div className="about-point">
-                  <span className="point-check">✓</span>
-                  <span>Real-time CCTV monitoring with people counting</span>
-                </div>
+                {[
+                  "Eliminate fake attendance and proxy staff reports",
+                  "Automate inspector assignment with conflict avoidance",
+                  "AI-powered anomaly detection across all institutes",
+                  "Tamper-proof geo-tagged evidence collection",
+                  "Real-time CCTV monitoring with people counting",
+                ].map((p, i) => (
+                  <div key={i} className="about-point">
+                    <span className="point-check">✓</span>
+                    <span>{p}</span>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="about-visual">
               <div className="about-card">
-                <div className="about-card-icon">🇮🇳</div>
+                <img src="/drishti-logo.svg" alt="DRISHTI AI" className="about-logo" />
                 <div className="about-card-title">Digital India Initiative</div>
                 <div className="about-card-desc">Smart Governance for Social Justice</div>
                 <div className="about-card-org">Ministry of Social Justice & Empowerment</div>
                 <div className="about-card-problem">
-                  Problem ID: 26095
-                  <br />
-                  Theme: Smart Automation
-                  <br />
+                  Problem ID: 26095<br />
+                  Theme: Smart Automation<br />
                   Category: Software
                 </div>
               </div>
@@ -192,6 +223,7 @@ export default function Landing({ onNavigate }) {
       {/* CTA */}
       <section className="cta-section">
         <div className="section-inner">
+          <img src="/drishti-logo.svg" alt="" className="cta-logo" />
           <h2 className="cta-title">Ready to Transform Governance?</h2>
           <p className="cta-desc">
             Join DRISHTI AI and experience AI-powered monitoring for transparent, accountable governance.
@@ -211,8 +243,11 @@ export default function Landing({ onNavigate }) {
       <footer className="landing-footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <span className="landing-brand-icon">👁</span>
-            <span>DRISHTI AI</span>
+            <img src="/drishti-logo.svg" alt="DRISHTI" className="footer-logo" />
+            <div>
+              <span className="footer-brand-name">DRISHTI AI</span>
+              <span className="footer-brand-sub">Since 2026</span>
+            </div>
           </div>
           <div className="footer-info">
             <p>© 2026 DRISHTI AI — Digital Real-time Intelligent Surveillance, Tracking & Inspection System</p>

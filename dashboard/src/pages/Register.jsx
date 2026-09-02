@@ -31,6 +31,7 @@ export default function Register({ onLogin, onNavigate }) {
   return (
     <div className="login-page">
       <div className="login-bg-grid" />
+      <div className="login-bg-glow" />
       <div className="login-container">
         <div className="login-top-bar">
           <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
@@ -41,10 +42,11 @@ export default function Register({ onLogin, onNavigate }) {
 
         <div className="login-brand">
           <div className="login-logo">
-            <span className="login-logo-icon">👁</span>
+            <img src="/drishti-logo.svg" alt="DRISHTI" />
           </div>
           <h1 className="login-title">DRISHTI AI</h1>
-          <p className="login-subtitle">Create your account</p>
+          <p className="login-subtitle">Create your official account</p>
+          <p className="login-org">Ministry of Social Justice & Empowerment</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -55,8 +57,8 @@ export default function Register({ onLogin, onNavigate }) {
             <input type="text" value={form.name} onChange={update("name")} placeholder="Enter full name" required />
           </div>
           <div className="form-group">
-            <label>Email</label>
-            <input type="email" value={form.email} onChange={update("email")} placeholder="Enter email" required />
+            <label>Email Address</label>
+            <input type="email" value={form.email} onChange={update("email")} placeholder="official@gov.in" required />
           </div>
           <div className="form-group">
             <label>Password</label>
@@ -87,7 +89,7 @@ export default function Register({ onLogin, onNavigate }) {
             <input type="tel" value={form.phone} onChange={update("phone")} placeholder="+91-XXXXXXXXXX" />
           </div>
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
+            {loading ? "Creating account..." : "Create Account →"}
           </button>
           <div className="login-footer">
             <span>Already have an account? </span>

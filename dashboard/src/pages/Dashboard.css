@@ -28,12 +28,16 @@
   border-bottom: 1px solid var(--border);
 }
 
-.brand-icon {
-  font-size: 1.5rem;
+.brand-icon, .brand-icon-img {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
   border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  font-size: 1.5rem;
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,7 +104,7 @@
 .user-avatar {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+  background: var(--accent-primary);
   border-radius: 10px;
   display: flex;
   align-items: center;

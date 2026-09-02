@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="96" fill="#1946D2"/>
+  <!-- Eye icon - surveillance/monitoring symbol -->
+  <g transform="translate(106, 80)">
+    <!-- Eye shape -->
+    <path d="M150 50 C80 50 20 120 20 170 C20 220 80 290 150 290 C220 290 280 220 280 170 C280 120 220 50 150 50 Z" 
+          fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Inner circle (pupil) -->
+    <circle cx="150" cy="170" r="50" fill="white"/>
+    <circle cx="150" cy="170" r="22" fill="#1946D2"/>
+    <!-- Top eyelid lines -->
+    <path d="M60 80 C90 60 120 48 150 48" stroke="white" stroke-width="24" stroke-linecap="round" fill="none"/>
+    <path d="M240 80 C210 60 180 48 150 48" stroke="white" stroke-width="24" stroke-linecap="round" fill="none"/>
+    <!-- Bottom eyelash lines -->
+    <path d="M80 260 C100 280 125 292 150 295" stroke="white" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <path d="M220 260 C200 280 175 292 150 295" stroke="white" stroke-width="22" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

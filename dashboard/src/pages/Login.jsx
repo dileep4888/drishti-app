@@ -27,6 +27,7 @@ export default function Login({ onLogin, onNavigate }) {
   return (
     <div className="login-page">
       <div className="login-bg-grid" />
+      <div className="login-bg-glow" />
       <div className="login-container">
         <div className="login-top-bar">
           <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
@@ -37,25 +38,25 @@ export default function Login({ onLogin, onNavigate }) {
 
         <div className="login-brand">
           <div className="login-logo">
-            <span className="login-logo-icon">👁</span>
+            <img src="/drishti-logo.svg" alt="DRISHTI" />
           </div>
           <h1 className="login-title">DRISHTI AI</h1>
           <p className="login-subtitle">
-            Digital Real-time Intelligent Surveillance, Tracking & Inspection System
+            Surveillance, Tracking & Inspection System
           </p>
           <p className="login-org">Ministry of Social Justice & Empowerment</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <h2>Sign In</h2>
+          <h2>Sign In to Dashboard</h2>
           {error && <div className="login-error">{error}</div>}
           <div className="form-group">
-            <label>Email</label>
+            <label>Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="official@gov.in"
               required
             />
           </div>
@@ -70,7 +71,11 @@ export default function Login({ onLogin, onNavigate }) {
             />
           </div>
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? (
+              <span className="btn-loading">Signing in...</span>
+            ) : (
+              <>Sign In →</>
+            )}
           </button>
           <div className="login-footer">
             <span>Don't have an account? </span>
@@ -79,6 +84,11 @@ export default function Login({ onLogin, onNavigate }) {
             </button>
           </div>
         </form>
+
+        <div className="login-demo">
+          <p className="demo-label">Demo Credentials</p>
+          <p className="demo-creds">dileepbairwa48@gmail.com / highxgamer</p>
+        </div>
       </div>
     </div>
   );
