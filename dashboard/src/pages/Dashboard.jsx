@@ -94,13 +94,13 @@ function StatusBadge({ status }) {
 
 // ── Main Dashboard ─────────────────────────────────────────────────────
 
-export default function Dashboard({ user, onLogout, onNavigate }) {
+export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
   const { theme, toggleTheme } = useTheme();
   const [activeNav, setActiveNav] = useState("overview");
-  const [stats, setStats] = useState(null);
-  const [institutes, setInstitutes] = useState([]);
+  const [stats, setStats] = useState(preloaded?.stats || null);
+  const [institutes, setInstitutes] = useState(preloaded?.institutes || []);
   const [inspections, setInspections] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState(preloaded?.alerts || []);
   const [cctv, setCctv] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -111,9 +111,26 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const [videoCallRoom, setVideoCallRoom] = useState(null);
   const [selectedInstitute, setSelectedInstitute] = useState(null);
   const [instituteDetail, setInstituteDetail] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!preloaded);
+  const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const fetchedRef = useState({})[0];
+
+  // Check if tab has data already
+  const hasData = {
+    overview: stats && institutes.length > 0,
+    institutes: institutes.length > 0,
+    inspections: inspections.length > 0,
+    alerts: alerts.length > 0,
+    cctv: cctv.length > 0,
+    complaints: complaints.length > 0,
+    analytics: !!analytics,
+    map: riskMap.length > 0,
+    "video-calls": videoCalls.length > 0,
+    beneficiaries: beneficiaries.length > 0,
+    predictive: predictive.length > 0,
+  };
 
   // Load data for active tab
   useEffect(() => {
@@ -140,7 +157,13 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   }, [alerts]);
 
   async function loadTabData() {
-    setLoading(true);
+    // If we already have data for this tab, refresh silently (no spinner)
+    const alreadyLoaded = hasData[activeNav];
+    if (alreadyLoaded) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       switch (activeNav) {
         case "overview":
@@ -182,6 +205,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       console.error("Failed to load data:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -313,6 +337,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             </div>
           </div>
         ) : (
+          <>
           <div className="content-area">
             {/* ── OVERVIEW ─────────────────────────────────────── */}
             {activeNav === "overview" && stats && (
@@ -681,6 +706,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
               </div>
             )}
           </div>
+          </>
         )}
       </main>
 

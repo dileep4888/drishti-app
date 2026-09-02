@@ -1,6 +1,35 @@
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+// ── Client-side cache (60s TTL) ──────────────────────────────────────
+const cache = new Map();
+const CACHE_TTL = 60_000; // 60 seconds
+
+function getCacheKey(path) {
+  return path;
+}
+
+function getCached(path) {
+  const entry = cache.get(getCacheKey(path));
+  if (entry && Date.now() - entry.ts < CACHE_TTL) return entry.data;
+  if (entry) cache.delete(getCacheKey(path));
+  return null;
+}
+
+function setCache(path, data) {
+  cache.set(getCacheKey(path), { data, ts: Date.now() });
+}
+
+// ── Request helper ───────────────────────────────────────────────────
+
 async function request(path, options = {}) {
+  const isGet = !options.method || options.method === "GET";
+
+  // Return cached data for GET requests (no body)
+  if (isGet && !options.body) {
+    const cached = getCached(path);
+    if (cached) return cached;
+  }
+
   const token = localStorage.getItem("drishti_token");
   const headers = {};
   if (!options.isForm) {
@@ -23,10 +52,34 @@ async function request(path, options = {}) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
     throw new Error(err.detail || `HTTP ${res.status}`);
   }
-  return res.json();
+  const data = await res.json();
+
+  // Cache GET responses
+  if (isGet && !options.body) {
+    setCache(path, data);
+  }
+
+  return data;
 }
 
-// ── Auth ───────────────────────────────────────────────────────────────
+// ── Cache helpers ────────────────────────────────────────────────────
+
+export function invalidateCache(pattern) {
+  for (const key of cache.keys()) {
+    if (key.includes(pattern)) cache.delete(key);
+  }
+}
+
+export function getCacheStatus() {
+  const now = Date.now();
+  const entries = [];
+  for (const [key, val] of cache.entries()) {
+    entries.push({ path: key, fresh: now - val.ts < CACHE_TTL, age: Math.round((now - val.ts) / 1000) });
+  }
+  return entries;
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────
 
 export async function register(data) {
   return request("/auth/register", {
@@ -46,13 +99,13 @@ export async function login(email, password) {
   });
 }
 
-// ── Dashboard Stats ────────────────────────────────────────────────────
+// ── Dashboard Stats ──────────────────────────────────────────────────
 
 export async function getStats() {
   return request("/api/stats");
 }
 
-// ── Institutes ─────────────────────────────────────────────────────────
+// ── Institutes ───────────────────────────────────────────────────────
 
 export async function getInstitutes(filters = {}) {
   const params = new URLSearchParams();
@@ -67,7 +120,7 @@ export async function getInstituteDetail(id) {
   return request(`/api/institutes/${id}`);
 }
 
-// ── Inspections ────────────────────────────────────────────────────────
+// ── Inspections ──────────────────────────────────────────────────────
 
 export async function getInspections(filters = {}) {
   const params = new URLSearchParams();
@@ -78,12 +131,14 @@ export async function getInspections(filters = {}) {
 }
 
 export async function assignRandomInspector(inspectionId) {
-  return request(`/api/inspections/${inspectionId}/assign-random`, {
+  const data = await request(`/api/inspections/${inspectionId}/assign-random`, {
     method: "POST",
   });
+  invalidateCache("/api/inspections");
+  return data;
 }
 
-// ── Alerts ─────────────────────────────────────────────────────────────
+// ── Alerts ───────────────────────────────────────────────────────────
 
 export async function getAlerts(filters = {}) {
   const params = new URLSearchParams();
@@ -94,10 +149,12 @@ export async function getAlerts(filters = {}) {
 }
 
 export async function resolveAlert(alertId) {
-  return request(`/api/alerts/${alertId}/resolve`, { method: "POST" });
+  const data = await request(`/api/alerts/${alertId}/resolve`, { method: "POST" });
+  invalidateCache("/api/alerts");
+  return data;
 }
 
-// ── CCTV ───────────────────────────────────────────────────────────────
+// ── CCTV ─────────────────────────────────────────────────────────────
 
 export async function getCCTV(filters = {}) {
   const params = new URLSearchParams();
@@ -106,7 +163,7 @@ export async function getCCTV(filters = {}) {
   return request(`/api/cctv${qs ? `?${qs}` : ""}`);
 }
 
-// ── Complaints ─────────────────────────────────────────────────────────
+// ── Complaints ───────────────────────────────────────────────────────
 
 export async function getComplaints(filters = {}) {
   const params = new URLSearchParams();
@@ -116,45 +173,60 @@ export async function getComplaints(filters = {}) {
   return request(`/api/complaints${qs ? `?${qs}` : ""}`);
 }
 
-// ── Analytics ──────────────────────────────────────────────────────────
+// ── Analytics ────────────────────────────────────────────────────────
 
 export async function getAnalytics() {
   return request("/api/analytics");
 }
 
-// ── Risk Map ───────────────────────────────────────────────────────────
+// ── Risk Map ─────────────────────────────────────────────────────────
 
 export async function getRiskMap() {
   return request("/api/risk-map");
 }
 
-// ── Video Calls ────────────────────────────────────────────────────────
+// ── Video Calls ──────────────────────────────────────────────────────
 
 export async function getVideoCalls() {
   return request("/api/video-calls");
 }
 
 export async function initiateVC(instituteId, calledPerson, role) {
-  return request(
+  const data = await request(
     `/api/video-calls/initiate?institute_id=${instituteId}&called_person=${encodeURIComponent(calledPerson)}&role=${role}`,
     { method: "POST" }
   );
+  invalidateCache("/api/video-calls");
+  return data;
 }
 
 export async function endVC(callId, notes = "") {
-  return request(`/api/video-calls/${callId}/end?notes=${encodeURIComponent(notes)}`, {
+  const data = await request(`/api/video-calls/${callId}/end?notes=${encodeURIComponent(notes)}`, {
     method: "POST",
   });
+  invalidateCache("/api/video-calls");
+  return data;
 }
 
-// ── Beneficiaries ──────────────────────────────────────────────────────
+// ── Beneficiaries ────────────────────────────────────────────────────
 
 export async function getBeneficiaries() {
   return request("/api/beneficiaries");
 }
 
-// ── Predictive Inspections ─────────────────────────────────────────────
+// ── Predictive Inspections ───────────────────────────────────────────
 
 export async function getPredictiveInspections() {
   return request("/api/predictive-inspections");
+}
+
+// ── Preload all overview data in parallel (called on login) ──────────
+
+export async function preloadDashboardData() {
+  const [stats, institutes, alerts] = await Promise.all([
+    getStats(),
+    getInstitutes(),
+    getAlerts(),
+  ]);
+  return { stats, institutes, alerts };
 }

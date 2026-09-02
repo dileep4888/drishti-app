@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { ThemeProvider } from "./ThemeContext";
+import { preloadDashboardData } from "./api";
 import Landing from "./pages/Landing";
 
 const Login = lazy(() => import("./pages/Login"));
@@ -20,6 +21,7 @@ function Loader() {
 function AppRoutes() {
   const [route, setRoute] = useState(window.location.hash.slice(1) || "/");
   const [user, setUser] = useState(null);
+  const [preloadedData, setPreloadedData] = useState(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("drishti_user");
@@ -39,13 +41,22 @@ function AppRoutes() {
     localStorage.setItem("drishti_token", token);
     localStorage.setItem("drishti_user", JSON.stringify(userData));
     setUser(userData);
-    navigate("/dashboard");
+    // Preload dashboard data while navigating
+    preloadDashboardData()
+      .then((data) => {
+        setPreloadedData(data);
+        navigate("/dashboard");
+      })
+      .catch(() => {
+        navigate("/dashboard");
+      });
   };
 
   const handleLogout = () => {
     localStorage.removeItem("drishti_token");
     localStorage.removeItem("drishti_user");
     setUser(null);
+    setPreloadedData(null);
     navigate("/");
   };
 
@@ -66,7 +77,7 @@ function AppRoutes() {
     return null;
   }
 
-  return <Suspense fallback={<Loader />}><Dashboard user={user} onLogout={handleLogout} onNavigate={navigate} /></Suspense>;
+  return <Suspense fallback={<Loader />}><Dashboard user={user} onLogout={handleLogout} onNavigate={navigate} preloaded={preloadedData} /></Suspense>;
 }
 
 function App() {
