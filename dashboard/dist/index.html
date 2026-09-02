@@ -4,15 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <meta name="theme-color" content="#0a0e1a" />
     <meta name="description" content="DRISHTI AI - Digital Real-time Intelligent Surveillance, Tracking & Inspection System" />
     <title>DRISHTI AI — Surveillance & Inspection System</title>
-    <script src="https://meet.jit.si/external_api.js" async></script>
-    <script type="module" crossorigin src="/assets/index-CkZHJ-8V.js"></script>
+    <!-- Preload critical static data for instant dashboard load -->
+    <link rel="preload" href="/api-data/stats.json" as="fetch" crossorigin />
+    <link rel="preload" href="/api-data/institutes.json" as="fetch" crossorigin />
+    <link rel="preload" href="/api-data/alerts.json" as="fetch" crossorigin />
+    <script type="module" crossorigin src="/assets/index-DOPjRIDv.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/leaflet-Ddy_slQG.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-Db8_7fsG.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-H8d5lSuL.css">
   </head>
   <body>
     <div id="root"></div>

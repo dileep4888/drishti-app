@@ -1,15 +1,10 @@
 {
   "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
-    }
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "dist/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api-data/(.*)", "dest": "/dist/api-data/$1", "headers": { "Cache-Control": "public, max-age=600, s-maxage=600, stale-while-revalidate=3600" } },
     { "src": "/api/(.*)", "dest": "/api/index.py", "headers": { "Cache-Control": "public, max-age=60, s-maxage=60" } },
     { "src": "/auth/(.*)", "dest": "/api/index.py" },
     { "src": "/health", "dest": "/api/index.py", "headers": { "Cache-Control": "public, max-age=300" } },
