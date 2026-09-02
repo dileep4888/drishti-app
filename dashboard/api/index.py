@@ -547,28 +547,48 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 @app.get("/api/stats")
 def get_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    # Single batched queries instead of 12 separate ones
+    inst_counts = dict(db.query(Institute.risk_level, func.count(Institute.id)).group_by(Institute.risk_level).all())
+    insp_counts = dict(db.query(Inspection.status, func.count(Inspection.id)).group_by(Inspection.status).all())
+    cctv_counts = dict(db.query(CCTVDevice.status, func.count(CCTVDevice.id)).group_by(CCTVDevice.status).all())
+    complaint_counts = dict(db.query(Complaint.status, func.count(Complaint.id)).group_by(Complaint.status).all())
+    alert_unresolved = db.query(Alert).filter(Alert.is_resolved == False).count()
     return {
-        "active_projects": db.query(Institute).count(),
-        "total_institutes": db.query(Institute).count(),
-        "live_cctv_cameras": db.query(CCTVDevice).filter(CCTVDevice.status == "online").count(),
-        "total_cctv_cameras": db.query(CCTVDevice).count(),
-        "inspections_today": db.query(Inspection).count(),
-        "pending_inspections": db.query(Inspection).filter(Inspection.status == "pending").count(),
-        "completed_inspections": db.query(Inspection).filter(Inspection.status == "completed").count(),
-        "high_risk_locations": db.query(Institute).filter(Institute.risk_score >= 61).count(),
-        "medium_risk_locations": db.query(Institute).filter(Institute.risk_score.between(31, 60)).count(),
-        "low_risk_locations": db.query(Institute).filter(Institute.risk_score.between(0, 30)).count(),
-        "anomalies_detected": db.query(Alert).filter(Alert.is_resolved == False).count(),
-        "unresolved_alerts": db.query(Alert).filter(Alert.is_resolved == False).count(),
-        "total_complaints": db.query(Complaint).count(),
-        "pending_complaints": db.query(Complaint).filter(Complaint.status == "pending").count(),
+        "active_projects": sum(inst_counts.values()),
+        "total_institutes": sum(inst_counts.values()),
+        "live_cctv_cameras": cctv_counts.get("online", 0),
+        "total_cctv_cameras": sum(cctv_counts.values()),
+        "inspections_today": sum(insp_counts.values()),
+        "pending_inspections": insp_counts.get("pending", 0),
+        "completed_inspections": insp_counts.get("completed", 0),
+        "high_risk_locations": inst_counts.get("high", 0) + inst_counts.get("critical", 0),
+        "medium_risk_locations": inst_counts.get("medium", 0),
+        "low_risk_locations": inst_counts.get("low", 0),
+        "anomalies_detected": alert_unresolved,
+        "unresolved_alerts": alert_unresolved,
+        "total_complaints": sum(complaint_counts.values()),
+        "pending_complaints": complaint_counts.get("pending", 0),
         "total_beneficiaries": db.query(Beneficiary).count(),
     }
 
 
 # ── Institutes ─────────────────────────────────────────────────────────
 
-def _ser_inst(inst, db):
+def _get_inst_stats(db):
+    """Batch-load per-institute stats in 3 queries instead of 4N."""
+    cctv_online = dict(db.query(CCTVDevice.institute_id, func.count(CCTVDevice.id))
+        .filter(CCTVDevice.status == "online").group_by(CCTVDevice.institute_id).all())
+    cctv_total = dict(db.query(CCTVDevice.institute_id, func.count(CCTVDevice.id))
+        .group_by(CCTVDevice.institute_id).all())
+    complaint_counts = dict(db.query(Complaint.institute_id, func.count(Complaint.id))
+        .group_by(Complaint.institute_id).all())
+    alert_counts = dict(db.query(Alert.institute_id, func.count(Alert.id))
+        .filter(Alert.is_resolved == False).group_by(Alert.institute_id).all())
+    return cctv_online, cctv_total, complaint_counts, alert_counts
+
+
+def _ser_inst(inst, stats):
+    cctv_on, cctv_tot, complaints, alerts = stats
     return {
         "id": inst.id, "name": inst.name, "type": inst.type, "scheme": inst.scheme,
         "state": inst.state, "district": inst.district, "address": inst.address,
@@ -576,10 +596,10 @@ def _ser_inst(inst, db):
         "risk_score": inst.risk_score, "risk_level": inst.risk_level, "trust_score": inst.trust_score,
         "reported_beneficiaries": inst.reported_beneficiaries, "reported_staff": inst.reported_staff,
         "status": inst.status, "contact_person": inst.contact_person,
-        "cctv_online": db.query(CCTVDevice).filter(CCTVDevice.institute_id == inst.id, CCTVDevice.status == "online").count(),
-        "cctv_total": db.query(CCTVDevice).filter(CCTVDevice.institute_id == inst.id).count(),
-        "complaint_count": db.query(Complaint).filter(Complaint.institute_id == inst.id).count(),
-        "active_alerts": db.query(Alert).filter(Alert.institute_id == inst.id, Alert.is_resolved == False).count(),
+        "cctv_online": cctv_on.get(inst.id, 0),
+        "cctv_total": cctv_tot.get(inst.id, 0),
+        "complaint_count": complaints.get(inst.id, 0),
+        "active_alerts": alerts.get(inst.id, 0),
     }
 
 
@@ -590,7 +610,9 @@ def get_institutes(risk_level: str = None, state: str = None, type: str = None,
     if risk_level: q = q.filter(Institute.risk_level == risk_level)
     if state: q = q.filter(Institute.state == state)
     if type: q = q.filter(Institute.type == type)
-    return [_ser_inst(i, db) for i in q.order_by(Institute.risk_score.desc()).all()]
+    institutes = q.order_by(Institute.risk_score.desc()).all()
+    stats = _get_inst_stats(db)
+    return [_ser_inst(i, stats) for i in institutes]
 
 
 @app.get("/api/institutes/{institute_id}")
@@ -622,18 +644,23 @@ def get_inspections(status: str = None, type: str = None,
     q = db.query(Inspection)
     if status: q = q.filter(Inspection.status == status)
     if type: q = q.filter(Inspection.type == type)
-    results = []
-    for insp in q.order_by(Inspection.created_at.desc()).all():
-        inst = db.query(Institute).filter(Institute.id == insp.institute_id).first()
-        inspector = db.query(Inspector).filter(Inspector.id == insp.inspector_id).first()
-        results.append({"id": insp.id, "institute_id": insp.institute_id,
-                        "institute_name": inst.name if inst else "Unknown", "institute_district": inst.district if inst else "",
-                        "inspector_name": inspector.name if inspector else "Unassigned", "inspector_id": inspector.employee_id if inspector else None,
-                        "type": insp.type, "status": insp.status, "gps_verified": insp.gps_verified,
-                        "compliance_status": insp.compliance_status, "notes": insp.notes,
-                        "created_at": insp.created_at.isoformat() if insp.created_at else None,
-                        "completed_date": insp.completed_date.isoformat() if insp.completed_date else None})
-    return results
+    inspections = q.order_by(Inspection.created_at.desc()).all()
+    # Batch-load institute + inspector names
+    inst_ids = {i.institute_id for i in inspections if i.institute_id}
+    insp_ids = {i.inspector_id for i in inspections if i.inspector_id}
+    inst_rows = db.query(Institute.id, Institute.name, Institute.district).filter(Institute.id.in_(inst_ids)).all() if inst_ids else []
+    inst_map = {r[0]: (r[1], r[2]) for r in inst_rows}
+    insp_rows = db.query(Inspector.id, Inspector.name, Inspector.employee_id).filter(Inspector.id.in_(insp_ids)).all() if insp_ids else []
+    insp_map = {r[0]: (r[1], r[2]) for r in insp_rows}
+    return [{"id": insp.id, "institute_id": insp.institute_id,
+             "institute_name": inst_map.get(insp.institute_id, ("Unknown", ""))[0],
+             "institute_district": inst_map.get(insp.institute_id, ("Unknown", ""))[1],
+             "inspector_name": insp_map.get(insp.inspector_id, ("Unassigned", None))[0] if insp.inspector_id else "Unassigned",
+             "inspector_id": insp_map.get(insp.inspector_id, (None, None))[1] if insp.inspector_id else None,
+             "type": insp.type, "status": insp.status, "gps_verified": insp.gps_verified,
+             "compliance_status": insp.compliance_status, "notes": insp.notes,
+             "created_at": insp.created_at.isoformat() if insp.created_at else None,
+             "completed_date": insp.completed_date.isoformat() if insp.completed_date else None} for insp in inspections]
 
 
 @app.post("/api/inspections/{inspection_id}/assign-random")
@@ -664,13 +691,13 @@ def get_alerts(severity: str = None, resolved: bool = None,
     q = db.query(Alert)
     if severity: q = q.filter(Alert.severity == severity)
     if resolved is not None: q = q.filter(Alert.is_resolved == resolved)
-    results = []
-    for a in q.order_by(Alert.created_at.desc()).all():
-        inst = db.query(Institute).filter(Institute.id == a.institute_id).first()
-        results.append({"id": a.id, "institute_id": a.institute_id, "institute_name": inst.name if inst else "System",
-                        "type": a.type, "severity": a.severity, "title": a.title, "message": a.message,
-                        "is_resolved": a.is_resolved, "created_at": a.created_at.isoformat() if a.created_at else None})
-    return results
+    alerts = q.order_by(Alert.created_at.desc()).all()
+    # Batch-load institute names
+    inst_ids = {a.institute_id for a in alerts if a.institute_id}
+    inst_names = dict(db.query(Institute.id, Institute.name).filter(Institute.id.in_(inst_ids)).all()) if inst_ids else {}
+    return [{"id": a.id, "institute_id": a.institute_id, "institute_name": inst_names.get(a.institute_id, "System"),
+             "type": a.type, "severity": a.severity, "title": a.title, "message": a.message,
+             "is_resolved": a.is_resolved, "created_at": a.created_at.isoformat() if a.created_at else None} for a in alerts]
 
 
 @app.post("/api/alerts/{alert_id}/resolve")
@@ -690,14 +717,13 @@ def resolve_alert(alert_id: int, db: Session = Depends(get_db), user: User = Dep
 def get_cctv_devices(status: str = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     q = db.query(CCTVDevice)
     if status: q = q.filter(CCTVDevice.status == status)
-    results = []
-    for d in q.all():
-        inst = db.query(Institute).filter(Institute.id == d.institute_id).first()
-        results.append({"id": d.id, "institute_id": d.institute_id, "institute_name": inst.name if inst else "Unknown",
-                        "name": d.name, "status": d.status, "people_detected": d.people_detected,
-                        "is_recording": d.is_recording, "location": d.location_description,
-                        "rtsp_url": d.rtsp_url, "last_online": d.last_online.isoformat() if d.last_online else None})
-    return results
+    devices = q.all()
+    inst_ids = {d.institute_id for d in devices}
+    inst_names = dict(db.query(Institute.id, Institute.name).filter(Institute.id.in_(inst_ids)).all()) if inst_ids else {}
+    return [{"id": d.id, "institute_id": d.institute_id, "institute_name": inst_names.get(d.institute_id, "Unknown"),
+             "name": d.name, "status": d.status, "people_detected": d.people_detected,
+             "is_recording": d.is_recording, "location": d.location_description,
+             "rtsp_url": d.rtsp_url, "last_online": d.last_online.isoformat() if d.last_online else None} for d in devices]
 
 
 # ── Complaints ─────────────────────────────────────────────────────────
@@ -708,14 +734,13 @@ def get_complaints(category: str = None, status: str = None,
     q = db.query(Complaint)
     if category: q = q.filter(Complaint.category == category)
     if status: q = q.filter(Complaint.status == status)
-    results = []
-    for c in q.order_by(Complaint.created_at.desc()).all():
-        inst = db.query(Institute).filter(Institute.id == c.institute_id).first()
-        results.append({"id": c.id, "institute_id": c.institute_id, "institute_name": inst.name if inst else "Unknown",
-                        "beneficiary_name": c.beneficiary_name, "category": c.category, "description": c.description,
-                        "status": c.status, "ai_category": c.ai_category, "is_anonymous": c.is_anonymous,
-                        "created_at": c.created_at.isoformat() if c.created_at else None})
-    return results
+    complaints = q.order_by(Complaint.created_at.desc()).all()
+    inst_ids = {c.institute_id for c in complaints}
+    inst_names = dict(db.query(Institute.id, Institute.name).filter(Institute.id.in_(inst_ids)).all()) if inst_ids else {}
+    return [{"id": c.id, "institute_id": c.institute_id, "institute_name": inst_names.get(c.institute_id, "Unknown"),
+             "beneficiary_name": c.beneficiary_name, "category": c.category, "description": c.description,
+             "status": c.status, "ai_category": c.ai_category, "is_anonymous": c.is_anonymous,
+             "created_at": c.created_at.isoformat() if c.created_at else None} for c in complaints]
 
 
 # ── Analytics ──────────────────────────────────────────────────────────
