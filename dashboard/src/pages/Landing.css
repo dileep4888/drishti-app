@@ -14,9 +14,16 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(10, 14, 26, 0.85);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .landing-nav {
+  background: rgba(10, 14, 26, 0.85);
+}
+
+[data-theme="light"] .landing-nav {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .landing-nav-inner {
@@ -584,5 +591,4 @@
   .about-card { padding: 1.5rem; }
   .about-card-title { font-size: 1rem; }
   .footer-inner { padding: 1rem; }
-}
 }

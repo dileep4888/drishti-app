@@ -11,11 +11,20 @@
 .login-bg-grid {
   position: absolute;
   inset: 0;
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .login-bg-grid {
   background-image:
     linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
+}
+
+[data-theme="light"] .login-bg-grid {
+  background-image:
+    linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px);
 }
 
 .login-container {
@@ -57,10 +66,17 @@
 .login-title {
   font-size: 2rem;
   font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .login-title {
   background: linear-gradient(135deg, #f1f5f9, #94a3b8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: -0.02em;
+}
+
+[data-theme="light"] .login-title {
+  color: #0f172a;
 }
 
 .login-subtitle {
