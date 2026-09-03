@@ -30,104 +30,93 @@ export default function Register({ onLogin, onNavigate }) {
 
   return (
     <div className="auth-page">
-      {/* Government Top Bar */}
-      <div className="govt-topbar">
-        Government of India
-        <button className="topbar-theme" onClick={toggleTheme}>
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
-        </button>
-      </div>
-
-      {/* Government Header */}
-      <header className="govt-header">
-        <div className="govt-emblem">
-          <img src="/drishti-logo.svg" alt="DRISHTI" />
-        </div>
-        <div className="govt-header-text">
-          <h1>DRISHTI AI</h1>
-          <p>Ministry of Social Justice & Empowerment</p>
-        </div>
-      </header>
-
-      {/* Auth Content */}
-      <div className="auth-content">
-        <div className="auth-card">
-          <div className="auth-card-header">
-            <h2>Official Registration</h2>
-            <p>Create your DRISHTI AI official account</p>
+      <div className="auth-split">
+        {/* Left: Brand */}
+        <div className="auth-brand">
+          <div className="auth-brand-content">
+            <img src="/drishti-logo.svg" alt="DRISHTI" className="auth-logo" />
+            <h1>DRISHTI</h1>
+            <p>Smart Real-Time Monitoring<br />& Inspection App</p>
+            <div className="auth-brand-features">
+              <div className="auth-feature">🛡️ AI-Powered Surveillance</div>
+              <div className="auth-feature">📹 Live CCTV Analytics</div>
+              <div className="auth-feature">📍 Geo-tagged Evidence</div>
+              <div className="auth-feature">🔍 Surprise Inspections</div>
+            </div>
           </div>
+        </div>
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            {error && (
-              <div className="auth-error">
-                <span className="auth-error-icon">⚠</span>
-                {error}
-              </div>
-            )}
-
-            <div className="form-group">
-              <label>Full Name</label>
-              <input type="text" value={form.name} onChange={update("name")} placeholder="Enter full name" required />
+        {/* Right: Form */}
+        <div className="auth-form-side">
+          <div className="auth-form-container">
+            <div className="auth-form-top">
+              <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
+              <button className="link-btn" onClick={toggleTheme}>{theme === "dark" ? "☀️" : "🌙"}</button>
             </div>
 
-            <div className="form-group">
-              <label>Email Address</label>
-              <input type="email" value={form.email} onChange={update("email")} placeholder="official@gov.in" required />
+            <div className="auth-form-header">
+              <h2>Create Account</h2>
+              <p>Register as a DRISHTI AI official</p>
             </div>
 
-            <div className="form-group">
-              <label>Password</label>
-              <input type="password" value={form.password} onChange={update("password")} placeholder="Min 6 characters" required minLength={6} />
-            </div>
-
-            <div className="form-group">
-              <label>Role</label>
-              <select value={form.role} onChange={update("role")}>
-                <option value="department_official">Department Official</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="state_authority">State Authority</option>
-                <option value="district_authority">District Authority</option>
-                <option value="inspector">Inspector</option>
-              </select>
-            </div>
-
-            <div className="auth-form-row">
-              <div className="form-group">
-                <label>State</label>
-                <input type="text" value={form.state} onChange={update("state")} placeholder="State" />
-              </div>
-              <div className="form-group">
-                <label>District</label>
-                <input type="text" value={form.district} onChange={update("district")} placeholder="District" />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>Phone</label>
-              <input type="tel" value={form.phone} onChange={update("phone")} placeholder="+91-XXXXXXXXXX" />
-            </div>
-
-            <button type="submit" className="auth-submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner" /> Creating account...
-                </>
-              ) : (
-                "Create Account"
+            <form className="auth-form" onSubmit={handleSubmit}>
+              {error && (
+                <div className="auth-error">
+                  <span>⚠</span> {error}
+                </div>
               )}
-            </button>
-          </form>
 
-          <div className="auth-card-footer">
-            <p>
-              Already have an account?{" "}
-              <button onClick={() => onNavigate("/login")}>Sign In</button>
-            </p>
+              <div className="form-group">
+                <label>Full Name</label>
+                <input type="text" value={form.name} onChange={update("name")} placeholder="Enter full name" required />
+              </div>
+
+              <div className="form-group">
+                <label>Email Address</label>
+                <input type="email" value={form.email} onChange={update("email")} placeholder="official@gov.in" required />
+              </div>
+
+              <div className="form-group">
+                <label>Password</label>
+                <input type="password" value={form.password} onChange={update("password")} placeholder="Min 6 characters" required minLength={6} />
+              </div>
+
+              <div className="form-group">
+                <label>Role</label>
+                <select value={form.role} onChange={update("role")}>
+                  <option value="department_official">Department Official</option>
+                  <option value="super_admin">Super Admin</option>
+                  <option value="state_authority">State Authority</option>
+                  <option value="district_authority">District Authority</option>
+                  <option value="inspector">Inspector</option>
+                </select>
+              </div>
+
+              <div className="auth-form-row">
+                <div className="form-group">
+                  <label>State</label>
+                  <input type="text" value={form.state} onChange={update("state")} placeholder="State" />
+                </div>
+                <div className="form-group">
+                  <label>District</label>
+                  <input type="text" value={form.district} onChange={update("district")} placeholder="District" />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Phone</label>
+                <input type="tel" value={form.phone} onChange={update("phone")} placeholder="+91-XXXXXXXXXX" />
+              </div>
+
+              <button type="submit" className="auth-submit" disabled={loading}>
+                {loading ? <><span className="spinner" /> Creating account...</> : "Create Account"}
+              </button>
+            </form>
+
+            <div className="auth-form-footer">
+              <p>Already have an account? <button onClick={() => onNavigate("/login")}>Sign In</button></p>
+            </div>
           </div>
-        </div>
-
-        <div className="auth-back">
-          <button onClick={() => onNavigate("/")}>← Back to Home</button>
         </div>
       </div>
     </div>

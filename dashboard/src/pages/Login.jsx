@@ -26,93 +26,81 @@ export default function Login({ onLogin, onNavigate }) {
 
   return (
     <div className="auth-page">
-      {/* Government Top Bar */}
-      <div className="govt-topbar">
-        Government of India
-        <button className="topbar-theme" onClick={toggleTheme}>
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
-        </button>
-      </div>
-
-      {/* Government Header */}
-      <header className="govt-header">
-        <div className="govt-emblem">
-          <img src="/drishti-logo.svg" alt="DRISHTI" />
-        </div>
-        <div className="govt-header-text">
-          <h1>DRISHTI AI</h1>
-          <p>Ministry of Social Justice & Empowerment</p>
-        </div>
-      </header>
-
-      {/* Auth Content */}
-      <div className="auth-content">
-        <div className="auth-card">
-          <div className="auth-card-header">
-            <h2>Citizen Login</h2>
-            <p>Sign in to access the DRISHTI AI monitoring dashboard</p>
+      <div className="auth-split">
+        {/* Left: Brand */}
+        <div className="auth-brand">
+          <div className="auth-brand-content">
+            <img src="/drishti-logo.svg" alt="DRISHTI" className="auth-logo" />
+            <h1>DRISHTI</h1>
+            <p>Smart Real-Time Monitoring<br />& Inspection App</p>
+            <div className="auth-brand-features">
+              <div className="auth-feature">🛡️ AI-Powered Surveillance</div>
+              <div className="auth-feature">📹 Live CCTV Analytics</div>
+              <div className="auth-feature">📍 Geo-tagged Evidence</div>
+              <div className="auth-feature">🔍 Surprise Inspections</div>
+            </div>
           </div>
+        </div>
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            {error && (
-              <div className="auth-error">
-                <span className="auth-error-icon">⚠</span>
-                {error}
-              </div>
-            )}
-
-            <div className="form-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="official@gov.in"
-                required
-              />
+        {/* Right: Form */}
+        <div className="auth-form-side">
+          <div className="auth-form-container">
+            <div className="auth-form-top">
+              <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
+              <button className="link-btn" onClick={toggleTheme}>{theme === "dark" ? "☀️" : "🌙"}</button>
             </div>
 
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
+            <div className="auth-form-header">
+              <h2>Welcome back</h2>
+              <p>Sign in to your DRISHTI AI dashboard</p>
             </div>
 
-            <button type="submit" className="auth-submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="spinner" /> Signing in...
-                </>
-              ) : (
-                "Sign In"
+            <form className="auth-form" onSubmit={handleSubmit}>
+              {error && (
+                <div className="auth-error">
+                  <span>⚠</span> {error}
+                </div>
               )}
-            </button>
-          </form>
 
-          <div className="auth-card-footer">
-            <p>
-              Don't have an account?{" "}
-              <button onClick={() => onNavigate("/register")}>Register here</button>
-            </p>
+              <div className="form-group">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="official@gov.in"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              <button type="submit" className="auth-submit" disabled={loading}>
+                {loading ? <><span className="spinner" /> Signing in...</> : "Sign In"}
+              </button>
+            </form>
+
+            <div className="auth-form-footer">
+              <p>Don't have an account? <button onClick={() => onNavigate("/register")}>Register</button></p>
+            </div>
+
+            <div className="auth-demo">
+              <div className="auth-demo-label">Demo Credentials</div>
+              <div className="auth-demo-creds">
+                <strong>Email:</strong> dileepbairwa48@gmail.com<br />
+                <strong>Password:</strong> highxgamer
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="auth-demo">
-          <div className="auth-demo-label">Demo Credentials</div>
-          <div className="auth-demo-creds">
-            <strong>Email:</strong> dileepbairwa48@gmail.com
-            <br />
-            <strong>Password:</strong> highxgamer
-          </div>
-        </div>
-
-        <div className="auth-back">
-          <button onClick={() => onNavigate("/")}>← Back to Home</button>
         </div>
       </div>
     </div>
