@@ -249,10 +249,12 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-brand">
-          <img src="/drishti-logo.svg" alt="DRISHTI" className="brand-icon-img" />
+          <div className="brand-icon">
+            <img src="/drishti-logo.svg" alt="DRISHTI" style={{width: "100%", height: "100%", objectFit: "contain", padding: "2px"}} />
+          </div>
           <div>
-            <div className="brand-name">DRISHTI</div>
-            <div className="brand-sub">AI SYSTEM</div>
+            <div className="brand-name">DRISHTI AI</div>
+            <div className="brand-sub">Monitoring System</div>
           </div>
         </div>
 
@@ -300,11 +302,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
           <div>
             <div className="header-top-row">
               <h1 className="page-title">
-              {NAV_ITEMS.find((n) => n.key === activeNav)?.icon}{" "}
               {NAV_ITEMS.find((n) => n.key === activeNav)?.label}
             </h1>
             <p className="page-subtitle">
-              {activeNav === "overview" && "Real-time monitoring dashboard"}
+              {activeNav === "overview" && "Centralized monitoring overview"}
               {activeNav === "institutes" && "Monitor all registered institutions"}
               {activeNav === "inspections" && "Track surprise & scheduled inspections"}
               {activeNav === "map" && "Geographic risk visualization"}

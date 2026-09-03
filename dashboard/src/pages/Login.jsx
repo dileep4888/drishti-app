@@ -25,69 +25,94 @@ export default function Login({ onLogin, onNavigate }) {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-bg-grid" />
-      <div className="login-bg-glow" />
-      <div className="login-container">
-        <div className="login-top-bar">
-          <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
-          <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
-            {theme === "dark" ? "☀️" : "🌙"}
-          </button>
-        </div>
+    <div className="auth-page">
+      {/* Government Top Bar */}
+      <div className="govt-topbar">
+        Government of India
+        <button className="topbar-theme" onClick={toggleTheme}>
+          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+        </button>
+      </div>
 
-        <div className="login-brand">
-          <div className="login-logo">
-            <img src="/drishti-logo.svg" alt="DRISHTI" />
-          </div>
-          <h1 className="login-title">DRISHTI AI</h1>
-          <p className="login-subtitle">
-            Surveillance, Tracking & Inspection System
-          </p>
-          <p className="login-org">Ministry of Social Justice & Empowerment</p>
+      {/* Government Header */}
+      <header className="govt-header">
+        <div className="govt-emblem">
+          <img src="/drishti-logo.svg" alt="DRISHTI" />
         </div>
+        <div className="govt-header-text">
+          <h1>DRISHTI AI</h1>
+          <p>Ministry of Social Justice & Empowerment</p>
+        </div>
+      </header>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <h2>Sign In to Dashboard</h2>
-          {error && <div className="login-error">{error}</div>}
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="official@gov.in"
-              required
-            />
+      {/* Auth Content */}
+      <div className="auth-content">
+        <div className="auth-card">
+          <div className="auth-card-header">
+            <h2>Citizen Login</h2>
+            <p>Sign in to access the DRISHTI AI monitoring dashboard</p>
           </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? (
-              <span className="btn-loading">Signing in...</span>
-            ) : (
-              <>Sign In →</>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {error && (
+              <div className="auth-error">
+                <span className="auth-error-icon">⚠</span>
+                {error}
+              </div>
             )}
-          </button>
-          <div className="login-footer">
-            <span>Don't have an account? </span>
-            <button type="button" className="link-btn" onClick={() => onNavigate("/register")}>
-              Register
-            </button>
-          </div>
-        </form>
 
-        <div className="login-demo">
-          <p className="demo-label">Demo Credentials</p>
-          <p className="demo-creds">dileepbairwa48@gmail.com / highxgamer</p>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="official@gov.in"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+
+            <button type="submit" className="auth-submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner" /> Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          <div className="auth-card-footer">
+            <p>
+              Don't have an account?{" "}
+              <button onClick={() => onNavigate("/register")}>Register here</button>
+            </p>
+          </div>
+        </div>
+
+        <div className="auth-demo">
+          <div className="auth-demo-label">Demo Credentials</div>
+          <div className="auth-demo-creds">
+            <strong>Email:</strong> dileepbairwa48@gmail.com
+            <br />
+            <strong>Password:</strong> highxgamer
+          </div>
+        </div>
+
+        <div className="auth-back">
+          <button onClick={() => onNavigate("/")}>← Back to Home</button>
         </div>
       </div>
     </div>
