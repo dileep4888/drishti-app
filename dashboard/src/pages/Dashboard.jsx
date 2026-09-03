@@ -524,11 +524,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       <h3 className="card-title">Inspection Map</h3>
                       <button className="card-link" onClick={() => setActiveNav("map")}>View Full Map</button>
                     </div>
-                    <div className="map-container">
-                      <Suspense fallback={<div className="loading-state"><div className="spinner" /></div>}>
-                        <RiskMapSection data={riskMap} />
-                      </Suspense>
-                    </div>
+                    <div className="map-container">                        <Suspense fallback={<div className="loading-state"><div className="spinner" /></div>}>
+                          <RiskMapSection riskMap={riskMap} />
+                        </Suspense>
+                      </div>
                   </div>
 
                   {/* Recent Alerts */}
@@ -696,7 +695,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                     <div className="card" style={{ padding: 0, overflow: "hidden" }}>
                       <div style={{ height: 500 }}>
                         <Suspense fallback={<div className="loading-state"><div className="spinner" /></div>}>
-                          <RiskMapSection data={riskMap} />
+                          <RiskMapSection riskMap={riskMap} />
                         </Suspense>
                       </div>
                     </div>
