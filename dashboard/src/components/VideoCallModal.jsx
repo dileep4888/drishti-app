@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Video, PhoneOff } from "lucide-react";
 
 export default function VideoCallModal({ roomName, displayName, onClose }) {
   const containerRef = useRef(null);
@@ -38,7 +39,7 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
 
     return () => {
       if (apiRef.current) {
-        try { apiRef.current.dispose(); } catch {}
+        try { apiRef.current.dispose(); } catch { /* ignore */ }
       }
     };
   }, [roomName, displayName, onClose]);
@@ -47,8 +48,8 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
     <div className="video-call-overlay" onClick={onClose}>
       <div className="video-call-modal" onClick={(e) => e.stopPropagation()}>
         <div className="video-call-header">
-          <span className="video-call-title">🎥 Video Call — {roomName}</span>
-          <button className="video-call-close" onClick={onClose}>✕ End Call</button>
+          <span className="video-call-title"><Video size={16} /> Video Call — {roomName}</span>
+          <button className="video-call-close" onClick={onClose}><PhoneOff size={14} /> End Call</button>
         </div>
         <div ref={containerRef} className="video-call-container" />
       </div>

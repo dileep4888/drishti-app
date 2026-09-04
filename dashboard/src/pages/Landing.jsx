@@ -1,8 +1,22 @@
 import { useTheme } from "../ThemeContext";
+import {
+  ShieldCheck, Camera, Search, MapPin, BarChart3, Video,
+  ChevronRight, Activity, Wifi, Clock, ArrowRight,
+  XCircle, CheckCircle, Sun, Moon, Building2
+} from "lucide-react";
 import "./Landing.css";
 
 export default function Landing({ onNavigate }) {
   const { theme, toggleTheme } = useTheme();
+
+  const features = [
+    { icon: <ShieldCheck size={22} />, title: "AI Risk Scoring", desc: "Dynamic trust scores combining CCTV data, attendance records, and inspection history." },
+    { icon: <Camera size={22} />, title: "Live CCTV Analytics", desc: "AI-powered people counting, anomaly detection, and real-time camera health monitoring." },
+    { icon: <Search size={22} />, title: "Surprise Inspections", desc: "Automated random inspector assignment with conflict avoidance for fair inspections." },
+    { icon: <MapPin size={22} />, title: "Geo-tagged Evidence", desc: "Tamper-proof records locked with GPS, timestamp, and inspector ID." },
+    { icon: <BarChart3 size={22} />, title: "Predictive Analytics", desc: "ML models predict which institutions require urgent inspection." },
+    { icon: <Video size={22} />, title: "Video Verification", desc: "Surprise video calls to verify staff presence and activities in real-time." },
+  ];
 
   return (
     <div className="landing">
@@ -17,9 +31,13 @@ export default function Landing({ onNavigate }) {
             </div>
           </div>
           <div className="landing-header-right">
-            <button className="link-btn" onClick={toggleTheme}>{theme === "dark" ? "☀️ Light" : "🌙 Dark"}</button>
+            <button className="link-btn" onClick={toggleTheme} title="Toggle theme">
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             <button className="btn-secondary" onClick={() => onNavigate("/login")}>Sign In</button>
-            <button className="btn-primary" onClick={() => onNavigate("/login")}>Get Started</button>
+            <button className="btn-primary" onClick={() => onNavigate("/login")}>
+              Get Started <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       </header>
@@ -27,28 +45,44 @@ export default function Landing({ onNavigate }) {
       {/* Hero */}
       <section className="landing-hero">
         <div className="landing-hero-inner">
-          <div className="landing-hero-badge">Government of India — Ministry of Social Justice & Empowerment</div>
+          <div className="landing-hero-badge">
+            <Building2 size={12} />
+            Government of India — Ministry of Social Justice &amp; Empowerment
+          </div>
           <h1>
             AI-Powered Surveillance,<br />
-            Tracking & Inspection System
+            Tracking &amp; Inspection System
           </h1>
           <p>
-            Centralized monitoring platform for transparent, accountable governance across all social welfare institutes.
-            Eliminate fraud, automate inspections, and ensure accountability with AI-driven analytics.
+            Centralized monitoring platform for transparent, accountable governance
+            across all social welfare institutes. Eliminate fraud, automate inspections,
+            and ensure accountability with AI-driven analytics.
           </p>
           <div className="landing-hero-actions">
             <button className="btn-primary btn-lg" onClick={() => onNavigate("/login")}>
-              Access Dashboard →
+              Access Dashboard <ArrowRight size={16} />
             </button>
             <button className="btn-secondary btn-lg" onClick={() => onNavigate("/register")}>
               Register as Official
             </button>
           </div>
           <div className="landing-hero-stats">
-            <div className="landing-stat"><span className="landing-stat-val">1,245</span><span className="landing-stat-lbl">Active Projects</span></div>
-            <div className="landing-stat"><span className="landing-stat-val">3,450</span><span className="landing-stat-lbl">CCTV Cameras</span></div>
-            <div className="landing-stat"><span className="landing-stat-val">28</span><span className="landing-stat-lbl">States Covered</span></div>
-            <div className="landing-stat"><span className="landing-stat-val">24/7</span><span className="landing-stat-lbl">Monitoring</span></div>
+            <div className="landing-stat">
+              <span className="landing-stat-val">1,245</span>
+              <span className="landing-stat-lbl">Active Projects</span>
+            </div>
+            <div className="landing-stat">
+              <span className="landing-stat-val">3,450</span>
+              <span className="landing-stat-lbl">CCTV Cameras</span>
+            </div>
+            <div className="landing-stat">
+              <span className="landing-stat-val">28</span>
+              <span className="landing-stat-lbl">States Covered</span>
+            </div>
+            <div className="landing-stat">
+              <span className="landing-stat-val">24/7</span>
+              <span className="landing-stat-lbl">Monitoring</span>
+            </div>
           </div>
         </div>
       </section>
@@ -61,14 +95,7 @@ export default function Landing({ onNavigate }) {
             <h2>Intelligent Monitoring Features</h2>
           </div>
           <div className="landing-features-grid">
-            {[
-              { icon: "🛡️", title: "AI Risk Scoring", desc: "Dynamic trust scores combining CCTV data, attendance records, and inspection history." },
-              { icon: "📹", title: "Live CCTV Analytics", desc: "AI-powered people counting, anomaly detection, and real-time camera health monitoring." },
-              { icon: "🔍", title: "Surprise Inspections", desc: "Automated random inspector assignment with conflict avoidance for fair inspections." },
-              { icon: "📍", title: "Geo-tagged Evidence", desc: "Tamper-proof records locked with GPS, timestamp, and inspector ID." },
-              { icon: "📊", title: "Predictive Analytics", desc: "ML models predict which institutions require urgent inspection." },
-              { icon: "🎥", title: "Video Verification", desc: "Surprise video calls to verify staff presence and activities in real-time." },
-            ].map((f, i) => (
+            {features.map((f, i) => (
               <div key={i} className="landing-feature-card">
                 <div className="landing-feature-icon">{f.icon}</div>
                 <h3>{f.title}</h3>
@@ -99,7 +126,7 @@ export default function Landing({ onNavigate }) {
                 </div>
                 <div className="landing-trust-info">
                   <h4>{t.name}</h4>
-                  <span className="badge" style={{ background: `${t.color}15`, color: t.color }}>{t.status}</span>
+                  <span className="badge" style={{ background: `color-mix(in srgb, ${t.color} 12%, transparent)`, color: t.color }}>{t.status}</span>
                   <p>{t.factors}</p>
                 </div>
               </div>
@@ -117,7 +144,9 @@ export default function Landing({ onNavigate }) {
           </div>
           <div className="landing-problem-grid">
             <div className="landing-problem-card">
-              <div className="landing-problem-head red">Current Challenges</div>
+              <div className="landing-problem-head red">
+                <XCircle size={14} /> Current Challenges
+              </div>
               <ul>
                 <li>Fake attendance records by NGOs</li>
                 <li>Proxy staff and beneficiary fraud</li>
@@ -127,7 +156,9 @@ export default function Landing({ onNavigate }) {
               </ul>
             </div>
             <div className="landing-problem-card">
-              <div className="landing-problem-head green">Our Solution</div>
+              <div className="landing-problem-head green">
+                <CheckCircle size={14} /> Our Solution
+              </div>
               <ul>
                 <li>AI-powered CCTV verification</li>
                 <li>Geo-tagged evidence collection</li>
@@ -146,7 +177,9 @@ export default function Landing({ onNavigate }) {
           <h2>Ready to Transform Governance?</h2>
           <p>Join DRISHTI AI for transparent, accountable social welfare monitoring.</p>
           <div className="landing-cta-actions">
-            <button className="btn-primary btn-lg" onClick={() => onNavigate("/login")}>Access Dashboard</button>
+            <button className="btn-primary btn-lg" onClick={() => onNavigate("/login")}>
+              Access Dashboard <ArrowRight size={16} />
+            </button>
             <button className="btn-secondary btn-lg" onClick={() => onNavigate("/register")}>Register</button>
           </div>
         </div>
@@ -163,7 +196,7 @@ export default function Landing({ onNavigate }) {
             </div>
           </div>
           <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-            © 2026 DRISHTI AI — Ministry of Social Justice & Empowerment, Government of India
+            &copy; 2026 DRISHTI AI — Ministry of Social Justice &amp; Empowerment, Government of India
           </div>
         </div>
       </footer>

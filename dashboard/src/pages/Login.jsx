@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { login } from "../api";
 import { useTheme } from "../ThemeContext";
+import {
+  ShieldCheck, Camera, MapPin, Search,
+  ArrowLeft, Sun, Moon, AlertTriangle, Loader2
+} from "lucide-react";
 import "./Login.css";
 
 export default function Login({ onLogin, onNavigate }) {
@@ -32,12 +36,12 @@ export default function Login({ onLogin, onNavigate }) {
           <div className="auth-brand-content">
             <img src="/drishti-logo.svg" alt="DRISHTI" className="auth-logo" />
             <h1>DRISHTI</h1>
-            <p>Smart Real-Time Monitoring<br />& Inspection App</p>
+            <p>Smart Real-Time Monitoring<br />&amp; Inspection App</p>
             <div className="auth-brand-features">
-              <div className="auth-feature">🛡️ AI-Powered Surveillance</div>
-              <div className="auth-feature">📹 Live CCTV Analytics</div>
-              <div className="auth-feature">📍 Geo-tagged Evidence</div>
-              <div className="auth-feature">🔍 Surprise Inspections</div>
+              <div className="auth-feature"><ShieldCheck size={14} /> AI-Powered Surveillance</div>
+              <div className="auth-feature"><Camera size={14} /> Live CCTV Analytics</div>
+              <div className="auth-feature"><MapPin size={14} /> Geo-tagged Evidence</div>
+              <div className="auth-feature"><Search size={14} /> Surprise Inspections</div>
             </div>
           </div>
         </div>
@@ -46,8 +50,12 @@ export default function Login({ onLogin, onNavigate }) {
         <div className="auth-form-side">
           <div className="auth-form-container">
             <div className="auth-form-top">
-              <button className="link-btn" onClick={() => onNavigate("/")}>← Home</button>
-              <button className="link-btn" onClick={toggleTheme}>{theme === "dark" ? "☀️" : "🌙"}</button>
+              <button className="link-btn" onClick={() => onNavigate("/")}>
+                <ArrowLeft size={14} /> Home
+              </button>
+              <button className="link-btn" onClick={toggleTheme}>
+                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
             </div>
 
             <div className="auth-form-header">
@@ -58,7 +66,7 @@ export default function Login({ onLogin, onNavigate }) {
             <form className="auth-form" onSubmit={handleSubmit}>
               {error && (
                 <div className="auth-error">
-                  <span>⚠</span> {error}
+                  <AlertTriangle size={14} /> {error}
                 </div>
               )}
 
@@ -85,7 +93,7 @@ export default function Login({ onLogin, onNavigate }) {
               </div>
 
               <button type="submit" className="auth-submit" disabled={loading}>
-                {loading ? <><span className="spinner" /> Signing in...</> : "Sign In"}
+                {loading ? <><Loader2 size={16} className="spinner-icon" /> Signing in...</> : "Sign In"}
               </button>
             </form>
 

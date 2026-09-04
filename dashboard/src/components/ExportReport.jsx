@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Download, FileSpreadsheet, FileJson } from "lucide-react";
 
 function exportCSV(data, filename) {
   if (!data.length) return;
@@ -10,9 +11,7 @@ function exportCSV(data, filename) {
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = `${filename}.csv`;
-  a.click();
+  a.href = url; a.download = `${filename}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -20,9 +19,7 @@ function exportJSON(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = `${filename}.json`;
-  a.click();
+  a.href = url; a.download = `${filename}.json`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -50,12 +47,12 @@ export default function ExportReport({ stats, institutes, inspections, alerts, c
   return (
     <div className="export-wrapper" style={{ position: "relative" }}>
       <button className="btn-sm btn-outline" onClick={() => setOpen(!open)}>
-        📥 Export
+        <Download size={13} /> Export
       </button>
       {open && (
         <div className="export-dropdown">
-          <button onClick={() => handleExport("csv")}>📄 Download CSV</button>
-          <button onClick={() => handleExport("json")}>📋 Download JSON</button>
+          <button onClick={() => handleExport("csv")}><FileSpreadsheet size={13} /> Download CSV</button>
+          <button onClick={() => handleExport("json")}><FileJson size={13} /> Download JSON</button>
         </div>
       )}
     </div>
