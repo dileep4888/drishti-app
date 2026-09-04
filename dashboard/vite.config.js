@@ -17,15 +17,6 @@ export default defineConfig({
     }
   ],
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'recharts': ['recharts'],
-          'leaflet': ['leaflet', 'react-leaflet'],
-        }
-      }
-    },
     chunkSizeWarningLimit: 600,
     cssCodeSplit: true,
   }
