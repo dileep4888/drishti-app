@@ -330,6 +330,30 @@ tbody tr.clickable { cursor: pointer; }
 }
 .page-header p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
+/* ── Error Boundary ─────────────────────────────────────────── */
+.error-boundary {
+  min-height: 60vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+.error-boundary-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 32px; max-width: 420px;
+  text-align: center; box-shadow: var(--shadow-card);
+}
+
+.error-boundary-icon {
+  width: 56px; height: 56px; margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--red-light); color: var(--red);
+  border-radius: 50%;
+}
+
+.error-boundary-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.error-boundary-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+
+.error-boundary-actions { display: flex; gap: 8px; justify-content: center; }
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }

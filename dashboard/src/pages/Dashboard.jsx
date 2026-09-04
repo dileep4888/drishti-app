@@ -429,14 +429,16 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                   <div className="card live-monitoring">
                     <div className="card-header"><h3 className="card-title">Live Monitoring</h3><span className="card-badge live"><span className="live-dot" /> LIVE</span></div>
                     <div className="live-video">
-                      <div className="live-video-placeholder">
-                        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-                          <rect width="400" height="200" fill="#1a3020" />
-                          <rect x="50" y="80" width="80" height="60" rx="2" fill="#2a4a30" />
-                          <rect x="200" y="60" width="120" height="100" rx="2" fill="#2a4a30" />
-                          <rect x="0" y="145" width="400" height="55" fill="#3a4a2a" />
-                        </svg>
-                        <div className="live-video-overlay-center"><Camera size={32} color="rgba(255,255,255,0.3)" /><div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 4 }}>Live CCTV Feed</div></div>
+                      <video
+                        className="live-video-el"
+                        src="/sample-feed.mp4"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                      <div className="live-video-overlay-center" style={{ pointerEvents: "none" }}>
+                        <div className="live-video-tag">CAM-01 · Main Gate</div>
                       </div>
                       <div className="live-video-overlay">
                         <span><MapPin size={10} /> 26.9124 N, 75.7873 E</span>
@@ -623,12 +625,22 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       {cctv.map(cam => (
                         <div key={cam.id} className={`cctv-card ${cam.status}`}>
                           <div className="cctv-preview">
-                            <div className="cctv-static">
-                              {cam.status === "online" && <div className="scanline" />}
-                              {cam.status === "online"
-                                ? <span className="cctv-live"><Radio size={12} /> LIVE — {cam.people_detected} people</span>
-                                : <span className="cctv-offline-text">OFFLINE</span>}
-                            </div>
+                            {cam.status === "online" ? (
+                              <>
+                                <video
+                                  className="cctv-video-el"
+                                  src="/sample-feed.mp4"
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                />
+                                <div className="scanline" />
+                                <span className="cctv-live"><Radio size={12} /> LIVE — {cam.people_detected} people</span>
+                              </>
+                            ) : (
+                              <span className="cctv-offline-text">OFFLINE</span>
+                            )}
                           </div>
                           <div className="cctv-info">
                             <div className="cctv-name">{cam.name}</div>
@@ -783,7 +795,12 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                 {instituteDetail.cctv_devices?.map(cam => (
                   <div key={cam.id} className={`mini-cctv ${cam.status}`}>
                     <div className="mini-cctv-preview">
-                      {cam.status === "online" ? <span className="mini-live"><CircleCheck size={12} /> LIVE — {cam.people_detected} people</span> : <span className="mini-offline">OFFLINE</span>}
+                      {cam.status === "online" ? (
+                        <>
+                          <video className="cctv-video-el" src="/sample-feed.mp4" autoPlay loop muted playsInline />
+                          <span className="mini-live"><CircleCheck size={12} /> LIVE — {cam.people_detected} people</span>
+                        </>
+                      ) : <span className="mini-offline">OFFLINE</span>}
                     </div>
                     <div className="mini-cctv-name">{cam.name}</div>
                   </div>
@@ -807,6 +824,11 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
       )}
     </div>
   );
+}
+
+/* Filter bar container used across list tabs */
+function FilterBar({ children }) {
+  return <div className="filter-bar" role="group" aria-label="Filters">{children}</div>;
 }
 
 /* Inline export button (CSV/JSON) used in page action bars */
