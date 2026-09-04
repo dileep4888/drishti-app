@@ -17,17 +17,17 @@ const RiskMapSection = lazy(() => import("./RiskMapSection"));
 const AnalyticsSection = lazy(() => import("./AnalyticsSection"));
 
 const NAV_ITEMS = [
-  { key: "overview", label: "Dashboard", icon: "🏠" },
-  { key: "inspections", label: "Inspections", icon: "📋" },
-  { key: "map", label: "Map View", icon: "🗺️" },
-  { key: "institutes", label: "Projects", icon: "📁" },
-  { key: "analytics", label: "Reports & Analytics", icon: "📈" },
-  { key: "alerts", label: "Alerts", icon: "🔔" },
-  { key: "cctv", label: "Assets", icon: "📹" },
-  { key: "beneficiaries", label: "Users & Roles", icon: "👥" },
-  { key: "complaints", label: "Departments", icon: "🏢" },
-  { key: "video-calls", label: "Settings", icon: "⚙️" },
-  { key: "predictive", label: "AI Predictions", icon: "🤖" },
+  { key: "overview", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+  { key: "inspections", label: "Inspections", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg> },
+  { key: "map", label: "Map View", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> },
+  { key: "institutes", label: "Projects", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> },
+  { key: "analytics", label: "Reports & Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+  { key: "alerts", label: "Alerts", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg> },
+  { key: "cctv", label: "Assets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> },
+  { key: "beneficiaries", label: "Users & Roles", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> },
+  { key: "complaints", label: "Departments", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg> },
+  { key: "video-calls", label: "Settings", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
+  { key: "predictive", label: "AI Predictions", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 014 4c0 1.95-2 3-2 8h-4c0-5-2-6.05-2-8a4 4 0 014-4z"/><path d="M10 14h4"/><path d="M10 18h4"/><path d="M11 22h2"/></svg> },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ const NAV_ITEMS = [
 function StatCard({ icon, label, value, color, sub, subType }) {
   return (
     <div className="stat-card">
-      <div className="stat-icon" style={{ background: `${color}15`, color }}>
+      <div className="stat-icon" style={{ background: `${color}12` }}>
         {icon}
       </div>
       <div>
@@ -258,9 +258,9 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
 
   // Alert icons by severity
   const alertIconMap = {
-    critical: { cls: "red", icon: "🔴" },
-    warning: { cls: "yellow", icon: "⚠️" },
-    info: { cls: "blue", icon: "ℹ️" },
+    critical: { cls: "red", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+    warning: { cls: "yellow", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+    info: { cls: "blue", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> },
   };
 
   return (
@@ -303,7 +303,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
               className={`nav-item ${activeNav === item.key ? "active" : ""}`}
               onClick={() => { setActiveNav(item.key); setSelectedInstitute(null); setSidebarOpen(false); }}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           ))}
@@ -311,7 +311,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
 
         <div className="sidebar-ai-badge">
           <div className="sidebar-ai-badge-header">
-            <span>🔒</span> AI VERIFICATION ACTIVE
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> AI VERIFICATION ACTIVE
           </div>
           <p>Anti-Spoofing & Depth Sensing Enabled</p>
           <div className="sidebar-ai-status">
@@ -353,7 +353,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
           </div>
           <div className="main-header-right">
             <div className="header-notif">
-              🔔
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
               {alerts.filter(a => !a.is_resolved).length > 0 && (
                 <span className="header-notif-badge">{alerts.filter(a => !a.is_resolved).length}</span>
               )}
@@ -396,7 +396,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       {now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} - {now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                     </div>
                     <div className="notif-bell">
-                      🔔
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
                       <span className="notif-bell-badge">{alerts.filter(a => !a.is_resolved).length || 0}</span>
                     </div>
                   </div>
@@ -404,11 +404,11 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
 
                 {/* ── Stats Cards ────────────────────────── */}
                 <div className="stats-grid" style={{ marginTop: 16 }}>
-                  <StatCard icon="📋" label="Total Inspections" value={totalInspections.toLocaleString()} color="#3b82f6" sub="↑ 18% from last month" subType="up" />
-                  <StatCard icon="✅" label="Approved" value={approvedInspections.toLocaleString()} color="#10b981" sub="78.8% of total" subType="neutral" />
-                  <StatCard icon="⏳" label="Pending" value={pendingInspections.toLocaleString()} color="#f59e0b" sub="18.6% of total" subType="neutral" />
-                  <StatCard icon="🚩" label="Flagged" value={flaggedCount.toLocaleString()} color="#ef4444" sub="2.6% of total" subType="neutral" />
-                  <StatCard icon="🏢" label="Departments" value={deptCount} color="#3b82f6" sub="Active" subType="neutral" />
+                  <StatCard icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>} label="Total Inspections" value={totalInspections.toLocaleString()} color="#3b82f6" sub="↑ 18% from last month" subType="up" />
+                  <StatCard icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>} label="Approved" value={approvedInspections.toLocaleString()} color="#10b981" sub="78.8% of total" subType="neutral" />
+                  <StatCard icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>} label="Pending" value={pendingInspections.toLocaleString()} color="#f59e0b" sub="18.6% of total" subType="neutral" />
+                  <StatCard icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>} label="Flagged" value={flaggedCount.toLocaleString()} color="#ef4444" sub="2.6% of total" subType="neutral" />
+                  <StatCard icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01"/><path d="M8 10h.01M16 10h.01M12 10h.01"/><path d="M8 14h.01M16 14h.01M12 14h.01"/></svg>} label="Departments" value={deptCount} color="#6366f1" sub="Active" subType="neutral" />
                 </div>
 
                 {/* ── Three Column: Inspections | Chart | Live ── */}
@@ -424,15 +424,25 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                         <div style={{ padding: 12, textAlign: "center", color: "var(--text-muted)", fontSize: 12 }}>No recent inspections</div>
                       )}
                       {recentInspections.map((insp, i) => {
-                        const thumbs = ["🏗️", "🏫", "🏗️", "🏫", "🏗️"];
+                        const thumbs = [
+                          "linear-gradient(135deg, #8B7355 0%, #6B5B3E 100%)",
+                          "linear-gradient(135deg, #4a6741 0%, #2d4a28 100%)",
+                          "linear-gradient(135deg, #5a7a8a 0%, #3d5a6a 100%)",
+                          "linear-gradient(135deg, #8a6a4a 0%, #6a4a2a 100%)",
+                          "linear-gradient(135deg, #7a8a6a 0%, #5a6a4a 100%)",
+                        ];
+                        const thumbIcons = ["", "", "", "", ""];
+                        const locations = ["Jaipur, Rajasthan", "Sikar, Rajasthan", "Alwar, Rajasthan", "Bhilwara, Rajasthan", "Kota, Rajasthan"];
                         const statuses = ["badge-green", "badge-yellow", "badge-green", "badge-yellow", "badge-red"];
                         const statusLabels = ["Approved", "Pending", "Approved", "Pending", "Flagged"];
                         return (
                           <div key={insp.id} className="inspection-item">
-                            <div className="inspection-thumb">{thumbs[i % 5]}</div>
+                            <div className="inspection-thumb" style={{ background: thumbs[i % 5] }}>
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            </div>
                             <div className="inspection-info">
                               <div className="inspection-name">{insp.institute_name || `Site ${i + 1}`}</div>
-                              <div className="inspection-location">{insp.type} — {insp.gps_verified ? "GPS ✓" : "GPS ✗"}</div>
+                              <div className="inspection-location">{locations[i % 5]}</div>
                             </div>
                             <div className="inspection-meta">
                               <span className={`badge ${statuses[i % 5]}`}>{statusLabels[i % 5]}</span>
@@ -456,28 +466,32 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, background: "#f59e0b", borderRadius: 2 }} /> Pending</span>
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, background: "#ef4444", borderRadius: 2 }} /> Flagged</span>
                     </div>
-                    <div style={{ height: 200, display: "flex", alignItems: "flex-end", gap: 8, padding: "0 4px" }}>
-                      {[300, 350, 380, 400, 420, 440, 460, 500].map((val, i) => {
-                        const maxVal = 500;
-                        const h = (val / maxVal) * 100;
-                        const approved = val * 0.788;
-                        const pending = val * 0.186;
-                        const flagged = val * 0.026;
-                        const ah = (approved / maxVal) * 100;
-                        const ph = (pending / maxVal) * 100;
-                        const fh = (flagged / maxVal) * 100;
-                        return (
-                          <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                            <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 1 }}>
-                              <div style={{ width: "100%", height: `${h}%`, background: "#3b82f6", borderRadius: "2px 2px 0 0", opacity: 0.3 }} />
-                              <div style={{ width: "100%", height: `${ah}%`, background: '#10b981', borderRadius: 2, marginTop: `-${h}%` }} />
-                              <div style={{ width: "100%", height: `${ph}%`, background: '#f59e0b', borderRadius: 2 }} />
-                              <div style={{ width: "100%", height: `${fh}%`, background: "#ef4444", borderRadius: 2 }} />
-                            </div>
-                            <div style={{ fontSize: 9, color: "var(--text-muted)" }}>{i + 1} Jun</div>
-                          </div>
-                        );
-                      })}
+                    <div style={{ height: 200, padding: '8px 4px 0' }}>
+                      <svg width="100%" height="100%" viewBox="0 0 300 160" preserveAspectRatio="none">
+                        {/* Y-axis labels */}
+                        {[0,100,200,300,400,500].map((v,i) => (
+                          <g key={i}>
+                            <line x1="0" y1={160 - (v/500)*140} x2="300" y2={160 - (v/500)*140} stroke="var(--border)" strokeWidth="0.5" />
+                            <text x="-4" y={164 - (v/500)*140} fontSize="8" fill="var(--text-muted)" textAnchor="end">{v}</text>
+                          </g>
+                        ))}
+                        {/* Total area (blue) */}
+                        <path d="M0,160 L0,130 42,120 85,112 128,104 171,96 214,88 257,76 300,60 L300,160 Z" fill="rgba(59,130,246,0.15)" />
+                        <polyline points="0,130 42,120 85,112 128,104 171,96 214,88 257,76 300,60" fill="none" stroke="#3b82f6" strokeWidth="2" />
+                        {/* Approved area (green) */}
+                        <path d="M0,160 L0,148 42,142 85,138 128,133 171,128 214,122 257,114 300,104 L300,160 Z" fill="rgba(16,185,129,0.15)" />
+                        <polyline points="0,148 42,142 85,138 128,133 171,128 214,122 257,114 300,104" fill="none" stroke="#10b981" strokeWidth="2" />
+                        {/* Pending area (yellow) */}
+                        <path d="M0,160 L0,155 42,153 85,152 128,150 171,148 214,146 257,143 300,140 L300,160 Z" fill="rgba(245,158,11,0.15)" />
+                        <polyline points="0,155 42,153 85,152 128,150 171,148 214,146 257,143 300,140" fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+                        {/* Flagged area (red) */}
+                        <path d="M0,160 L0,158 42,158 85,157 128,157 171,156 214,156 257,155 300,155 L300,160 Z" fill="rgba(239,68,68,0.1)" />
+                        <polyline points="0,158 42,158 85,157 128,157 171,156 214,156 257,155 300,155" fill="none" stroke="#ef4444" strokeWidth="1.5" />
+                        {/* X-axis labels */}
+                        {['1 Jun','2 Jun','3 Jun','4 Jun','5 Jun','6 Jun','7 Jun','8 Jun'].map((d,i) => (
+                          <text key={i} x={i * 42.8 + 10} y="158" fontSize="7" fill="var(--text-muted)">{d}</text>
+                        ))}
+                      </svg>
                     </div>
                   </div>
 
@@ -488,10 +502,31 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       <span className="card-badge live">LIVE</span>
                     </div>
                     <div className="live-video">
-                      <div className="live-video-placeholder">
-                        <div style={{ fontSize: 32, marginBottom: 8 }}>📹</div>
-                        <div>Live CCTV Feed</div>
-                        <div style={{ fontSize: 10, marginTop: 4 }}>RTSP Stream Active</div>
+                      <div className="live-video-placeholder" style={{ position: 'relative', width: '100%', height: '100%' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(10,40,20,0.3) 0%, rgba(10,30,15,0.6) 100%)', zIndex: 1 }} />
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(0deg, #2a3a1a, transparent)', zIndex: 1 }} />
+                        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }} viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
+                          <rect width="400" height="200" fill="#1a3020" />
+                          <rect x="50" y="80" width="80" height="60" rx="2" fill="#2a4a30" />
+                          <rect x="60" y="90" width="20" height="20" rx="1" fill="#3a5a40" />
+                          <rect x="90" y="90" width="20" height="20" rx="1" fill="#3a5a40" />
+                          <rect x="60" y="120" width="20" height="20" rx="1" fill="#3a5a40" />
+                          <rect x="90" y="120" width="20" height="20" rx="1" fill="#3a5a40" />
+                          <rect x="200" y="60" width="120" height="100" rx="2" fill="#2a4a30" />
+                          <rect x="210" y="70" width="30" height="30" rx="1" fill="#3a5a40" />
+                          <rect x="250" y="70" width="30" height="30" rx="1" fill="#3a5a40" />
+                          <rect x="290" y="70" width="20" height="30" rx="1" fill="#3a5a40" />
+                          <rect x="210" y="110" width="30" height="30" rx="1" fill="#3a5a40" />
+                          <rect x="250" y="110" width="30" height="30" rx="1" fill="#3a5a40" />
+                          <circle cx="350" cy="40" r="15" fill="#4a6a3a" opacity="0.5" />
+                          <rect x="0" y="145" width="400" height="55" fill="#3a4a2a" />
+                          <rect x="30" y="130" width="6" height="40" fill="#5a6a4a" />
+                          <rect x="20" y="125" width="26" height="8" fill="#5a6a4a" />
+                        </svg>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 4 }}>Live CCTV Feed</div>
+                        </div>
                       </div>
                       <div className="live-video-overlay">
                         <span>Geo: 26.9124° N, 75.7873° E</span>
@@ -507,10 +542,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                         </div>
                       </div>
                       <div className="live-actions">
-                        <button className="live-action"><span className="live-action-icon">📸</span>Capture</button>
-                        <button className="live-action"><span className="live-action-icon">🎬</span>Record</button>
-                        <button className="live-action"><span className="live-action-icon">📷</span>Snapshot</button>
-                        <button className="live-action"><span className="live-action-icon">🖥️</span>Full Screen</button>
+                        <button className="live-action"><span className="live-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>Capture</button>
+                        <button className="live-action"><span className="live-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span>Record</button>
+                        <button className="live-action"><span className="live-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>Snapshot</button>
+                        <button className="live-action"><span className="live-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></span>Full Screen</button>
                       </div>
                     </div>
                   </div>
@@ -579,19 +614,25 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                 {/* ── Feature Cards (Bottom) ──────────────── */}
                 <div className="features-bottom">
                   <div className="feature-card-bottom">
-                    <div className="feature-card-bottom-icon">🛡️</div>
+                    <div className="feature-card-bottom-icon">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </div>
                     <h4>Anti-Spoofing AI</h4>
                     <p>Detects screen replay fraud using depth sensing & lighting analysis.</p>
                     <div className="feature-card-bottom-status text-green">Status: Active</div>
                   </div>
                   <div className="feature-card-bottom">
-                    <div className="feature-card-bottom-icon">🔐</div>
+                    <div className="feature-card-bottom-icon">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </div>
                     <h4>Visual Hashing</h4>
                     <p>Detects duplicate assets using perceptual hashing algorithm.</p>
                     <div className="feature-card-bottom-status text-green">Status: Active</div>
                   </div>
                   <div className="feature-card-bottom">
-                    <div className="feature-card-bottom-icon">🔒</div>
+                    <div className="feature-card-bottom-icon">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+                    </div>
                     <h4>Secure & Transparent</h4>
                     <p>End-to-end encrypted data for better governance and accountability.</p>
                     <div className="feature-card-bottom-status text-green">Status: Secure</div>

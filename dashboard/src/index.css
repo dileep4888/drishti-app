@@ -4,11 +4,11 @@
 
 :root,
 [data-theme="dark"] {
-  --bg-page: #f5f7fa;
+  --bg-page: #f0f2f5;
   --bg-card: #ffffff;
-  --bg-sidebar: #1a2332;
-  --bg-sidebar-hover: rgba(255,255,255,0.08);
-  --bg-sidebar-active: rgba(16,185,129,0.12);
+  --bg-sidebar: #1e2a3a;
+  --bg-sidebar-hover: rgba(255,255,255,0.06);
+  --bg-sidebar-active: rgba(16,185,129,0.18);
   --border: #e5e8ed;
   --border-light: #f0f2f5;
   --text-primary: #1a2332;
@@ -83,7 +83,7 @@ button { cursor: pointer; border: none; outline: none; }
 [data-theme="dark"] {
   --bg-page: #0f1724;
   --bg-card: #1a2742;
-  --bg-sidebar: #0a1220;
+  --bg-sidebar: #162030;
   --border: #2a3a52;
   --border-light: #243348;
   --text-primary: #e8eaf0;
