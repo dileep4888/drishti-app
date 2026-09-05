@@ -354,6 +354,33 @@ tbody tr.clickable { cursor: pointer; }
 
 .error-boundary-actions { display: flex; gap: 8px; justify-content: center; }
 
+/* ── Video Call Modal ──────────────────────────────────────────── */
+.video-call-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; backdrop-filter: blur(4px);
+}
+.video-call-modal {
+  background: var(--bg-card); border-radius: var(--radius-lg);
+  width: 90vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.video-call-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--bg-sidebar); color: #fff;
+}
+.video-call-title {
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;
+}
+.video-call-close {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.12); color: #fff;
+  padding: 5px 12px; border-radius: var(--radius-sm); font-size: 12px;
+  font-weight: 600; cursor: pointer; transition: var(--transition);
+}
+.video-call-close:hover { background: rgba(255,255,255,0.2); }
+.video-call-container { flex: 1; min-height: 0; }
+
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }

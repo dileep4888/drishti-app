@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { key: "cctv", label: "Assets", icon: <Camera size={18} /> },
   { key: "beneficiaries", label: "Users & Roles", icon: <Users size={18} /> },
   { key: "complaints", label: "Departments", icon: <Building size={18} /> },
-  { key: "video-calls", label: "Settings", icon: <Settings size={18} /> },
+  { key: "video-calls", label: "Video Call Log", icon: <Video size={18} /> },
   { key: "predictive", label: "AI Predictions", icon: <Brain size={18} /> },
 ];
 
@@ -147,6 +147,8 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
   };
 
   useEffect(() => { loadTabData(); }, [activeNav]);
+
+  useEffect(() => { if (activeNav !== "overview") loadTabData(); /* eslint-disable-line */ }, [filters]);
 
   useEffect(() => {
     const iv = setInterval(async () => {
@@ -301,7 +303,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
             <GlobalSearch institutes={institutes} inspections={inspections} alerts={alerts} complaints={complaints} onNavigate={(nav) => setActiveNav(nav)} onSelectInstitute={handleViewInstitute} />
           </div>
           <div className="main-header-right">
-            <button className="header-notif" title="Notifications" aria-label="Notifications">
+            <button className="header-notif" title="Notifications" aria-label="Notifications" onClick={() => setActiveNav("alerts")}>
               <Bell size={20} />
               {unresolvedAlerts > 0 && <span className="header-notif-badge">{unresolvedAlerts}</span>}
             </button>
@@ -316,10 +318,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
               </button>
               {profileOpen && (
                 <div className="header-profile-dropdown">
-                  <button onClick={() => { setProfileOpen(false); }}><User size={14} /> Profile</button>
+                  <button onClick={() => { setActiveNav("overview"); setProfileOpen(false); }}><User size={14} /> Profile</button>
                   <button onClick={() => { setActiveNav("inspections"); setProfileOpen(false); }}><ClipboardList size={14} /> My Inspections</button>
                   <button onClick={() => { setActiveNav("video-calls"); setProfileOpen(false); }}><SlidersHorizontal size={14} /> Preferences</button>
-                  <button onClick={() => { setProfileOpen(false); }}><LifeBuoy size={14} /> Help &amp; Support</button>
+                  <button onClick={() => { setActiveNav("alerts"); setProfileOpen(false); }}><LifeBuoy size={14} /> Help &amp; Support</button>
                   <div className="header-profile-sep" />
                   <button className="header-profile-logout" onClick={onLogout}><LogOut size={14} /> Logout</button>
                 </div>
@@ -454,10 +456,10 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                         </div>
                       </div>
                       <div className="live-actions">
-                        <button className="live-action" title="Capture"><Camera size={14} /> Capture</button>
-                        <button className="live-action" title="Record"><CircleAlert size={14} /> Record</button>
-                        <button className="live-action" title="Snapshot"><ImageIcon size={14} /> Snapshot</button>
-                        <button className="live-action" title="Full screen"><Maximize2 size={14} /> Full Screen</button>
+                        <button className="live-action" title="Capture" onClick={() => alert("Screenshot captured (demo)")}><Camera size={14} /> Capture</button>
+                        <button className="live-action" title="Record" onClick={() => alert("Recording started (demo)")}><CircleAlert size={14} /> Record</button>
+                        <button className="live-action" title="Snapshot" onClick={() => alert("Snapshot saved (demo)")}><ImageIcon size={14} /> Snapshot</button>
+                        <button className="live-action" title="Full screen" onClick={() => document.querySelector('.live-video')?.requestFullscreen?.()}><Maximize2 size={14} /> Full Screen</button>
                       </div>
                     </div>
                   </div>
@@ -527,9 +529,9 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                   <>
                     <div className="page-header"><h2>Projects</h2><p>Monitor all registered institutions</p></div>
                     <div className="page-actions">
-                      <div className="page-actions-search"><Search size={14} /><input placeholder="Search projects..." aria-label="Search projects" /></div>
-                      <button className="btn-outline"><ListFilter size={13} /> Filter</button>
-                      <ExportButton institutes={institutes} activeNav="institutes" />
+                      <div className="page-actions-search"><Search size={14} /><input placeholder="Search projects..." aria-label="Search projects" onChange={e => setFilters({ ...filters, search: e.target.value })} /></div>
+                      <button className="btn-outline" onClick={() => setFilters({})}><ListFilter size={13} /> Clear Filters</button>
+                      <ExportButton institutes={institutes} inspections={inspections} activeNav="institutes" />
                     </div>
                     <FilterBar><Select label="Type" value={filters.type || ""} onChange={v => setFilters({ ...filters, type: v })} options={["ngo", "institute", "project"]} /><Select label="Risk" value={filters.risk_level || ""} onChange={v => setFilters({ ...filters, risk_level: v })} options={["low", "medium", "high", "critical"]} /><Select label="State" value={filters.state || ""} onChange={v => setFilters({ ...filters, state: v })} options={["Rajasthan", "Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "Gujarat"]} /></FilterBar>
                     <div className="table-wrapper"><table className="data-table full">
@@ -546,9 +548,9 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                             <td style={{ fontWeight: 700, color: inst.trust_score >= 60 ? "var(--green)" : "var(--red)" }}>{inst.trust_score}</td>
                             <td><StatusBadge status={inst.status} /></td>
                             <td className="row-actions" onClick={e => e.stopPropagation()}>
-                              <button className="icon-btn" title="View"><Eye size={14} /></button>
-                              <button className="icon-btn" title="Edit"><Pencil size={14} /></button>
-                              <button className="icon-btn" title="Download"><Download size={14} /></button>
+                              <button className="icon-btn" title="View" onClick={() => handleViewInstitute(inst.id)}><Eye size={14} /></button>
+                              <button className="icon-btn" title="Edit" onClick={() => alert(`Edit: ${inst.name}`)}><Pencil size={14} /></button>
+                              <button className="icon-btn" title="Download" onClick={() => { const csv = `ID,Name,Type,Scheme,Location,Risk\nINS-${inst.id},${inst.name},${inst.type},${inst.scheme},${inst.district},${inst.risk_level}`; const b = new Blob([csv], {type: 'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `INS-${inst.id}.csv`; a.click(); URL.revokeObjectURL(a.href); }}><Download size={14} /></button>
                             </td>
                           </tr>
                         ))}
@@ -562,8 +564,8 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                   <>
                     <div className="page-header"><h2>Inspections</h2><p>Monitor, verify and manage field inspections</p></div>
                     <div className="page-actions">
-                      <div className="page-actions-search"><Search size={14} /><input placeholder="Search inspections..." aria-label="Search inspections" /></div>
-                      <button className="btn-outline"><ListFilter size={13} /> Filter</button>
+                      <div className="page-actions-search"><Search size={14} /><input placeholder="Search inspections..." aria-label="Search inspections" onChange={e => setFilters({ ...filters, search: e.target.value })} /></div>
+                      <button className="btn-outline" onClick={() => setFilters({})}><ListFilter size={13} /> Clear Filters</button>
                       <ExportButton inspections={inspections} activeNav="inspections" />
                     </div>
                     <FilterBar><Select label="Status" value={filters.status || ""} onChange={v => setFilters({ ...filters, status: v })} options={["pending", "in_progress", "completed", "cancelled"]} /><Select label="Type" value={filters.type || ""} onChange={v => setFilters({ ...filters, type: v })} options={["surprise", "scheduled", "follow_up"]} /></FilterBar>
@@ -581,8 +583,8 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                             <td>{insp.compliance_status ? <StatusBadge status={insp.compliance_status} /> : "—"}</td>
                             <td className="row-actions">
                               {insp.status === "pending" && !insp.inspector_name && <button className="btn-sm btn-primary" onClick={() => handleAssignRandom(insp.id)}>Assign</button>}
-                              <button className="icon-btn" title="View"><Eye size={14} /></button>
-                              <button className="icon-btn" title="Review"><ClipboardCheck size={14} /></button>
+                              <button className="icon-btn" title="View" onClick={() => handleViewInstitute(insp.institute_id)}><Eye size={14} /></button>
+                              <button className="icon-btn" title="Review" onClick={() => alert(`Review inspection INS-${insp.id}`)}><ClipboardCheck size={14} /></button>
                             </td>
                           </tr>
                         ))}
@@ -685,7 +687,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
 
                 {activeNav === "video-calls" && (
                   <>
-                    <div className="page-header"><h2>Settings</h2><p>Surprise video verification calls</p></div>
+                    <div className="page-header"><h2>Video Call Log</h2><p>Surprise video verification calls to institute contacts</p></div>
                     <div style={{ marginBottom: 16 }}><button className="btn-primary" onClick={() => setVideoCallRoom(`official-${Date.now()}`)}><Video size={14} className="lucide" /> Start Surprise Video Call</button></div>
                     <ExifVerifier />
                     <div className="table-wrapper" style={{ marginTop: 16 }}><table className="data-table full">
@@ -838,9 +840,11 @@ function ExportButton({ institutes, inspections, activeNav }) {
   const name = activeNav || "report";
 
   function exportCSV(rows, filename) {
-    if (!rows.length) return;
-    const headers = Object.keys(rows[0]);
-    const csv = [headers.join(","), ...rows.map(r => headers.map(h => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+    if (!rows?.length) return;
+    const rowsClean = rows.filter(r => r && typeof r === 'object');
+    if (!rowsClean.length) return;
+    const headers = Object.keys(rowsClean[0]);
+    const csv = [headers.join(","), ...rowsClean.map(r => headers.map(h => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -850,7 +854,7 @@ function ExportButton({ institutes, inspections, activeNav }) {
 
   return (
     <div className="export-wrapper" style={{ position: "relative" }}>
-      <button className="btn-outline" onClick={() => setOpen(!open)}><Download size={13} /> Export</button>
+      <button className="btn-outline" onClick={() => setOpen(!open)} aria-expanded={open}><Download size={13} /> Export</button>
       {open && (
         <div className="export-dropdown" onMouseLeave={() => setOpen(false)}>
           <button onClick={() => { exportCSV(data, `drishti-${name}-${new Date().toISOString().slice(0, 10)}`); setOpen(false); }}>Download CSV</button>
