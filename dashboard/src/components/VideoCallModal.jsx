@@ -13,8 +13,6 @@ function loadJitsiScript() {
       script.async = true;
       document.head.appendChild(script);
     }
-    // If a previous modal open already loaded the script, its "load" event has
-    // already fired — poll for the global instead of waiting for a dead event.
     if (script.dataset.loaded === "true" || window.JitsiMeetExternalAPI) {
       script.dataset.loaded = "true";
       return resolve();
@@ -26,7 +24,7 @@ function loadJitsiScript() {
         clearInterval(poll);
         script.dataset.loaded = "true";
         resolve();
-      } else if (tries > 40) { // ~20s timeout
+      } else if (tries > 40) {
         clearInterval(poll);
         reject(new Error("Jitsi SDK load timed out"));
       }
@@ -47,9 +45,11 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
   const containerRef = useRef(null);
   const apiRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const initJitsi = useCallback(() => {
     setStatus("loading");
+    setErrorMsg(null);
     loadJitsiScript()
       .then(() => {
         if (!containerRef.current) return;
@@ -79,6 +79,7 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
       .catch((err) => {
         console.error("Jitsi load error:", err);
         setStatus("error");
+        setErrorMsg(err instanceof Error ? err.message : String(err));
       });
   }, [roomName, displayName, onClose]);
 
@@ -110,8 +111,9 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
         )}
         {status === "error" && (
           <div className="video-call-status">
-            <p>Could not start the video call. Check your internet connection and allow camera/mic access.</p>
-            <button className="btn-outline" onClick={initJitsi}>Try Again</button>
+            <p className="text-red">Could not start the video call. Check your internet connection and allow camera/mic access.</p>
+            <code style={{ marginTop: 6, fontSize: 11, wordBreak: "break-all" }}>{errorMsg || "Unknown error"}</code>
+            <button className="btn-outline" onClick={initJitsi} style={{ marginTop: 10 }}>Try Again</button>
           </div>
         )}
       </div>
