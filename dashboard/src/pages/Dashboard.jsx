@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { key: "cctv", label: "Assets", icon: <Camera size={18} /> },
   { key: "beneficiaries", label: "Users & Roles", icon: <Users size={18} /> },
   { key: "complaints", label: "Departments", icon: <Building size={18} /> },
-  { key: "video-calls", label: "Settings", icon: <Settings size={18} /> },
+  { key: "video-calls", label: "Video Call Log", icon: <Video size={18} /> },
   { key: "predictive", label: "AI Predictions", icon: <Brain size={18} /> },
 ];
 
@@ -685,7 +685,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
 
                 {activeNav === "video-calls" && (
                   <>
-                    <div className="page-header"><h2>Settings</h2><p>Surprise video verification calls</p></div>
+                    <div className="page-header"><h2>Video Call Log</h2><p>Surprise video verification calls to institute contacts</p></div>
                     <div style={{ marginBottom: 16 }}><button className="btn-primary" onClick={() => setVideoCallRoom(`official-${Date.now()}`)}><Video size={14} className="lucide" /> Start Surprise Video Call</button></div>
                     <ExifVerifier />
                     <div className="table-wrapper" style={{ marginTop: 16 }}><table className="data-table full">
