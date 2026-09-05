@@ -116,10 +116,6 @@ export async function getInstitutes(filters = {}) {
   if (filters.risk_level) data = data.filter(i => i.risk_level === filters.risk_level);
   if (filters.state) data = data.filter(i => i.state === filters.state);
   if (filters.type) data = data.filter(i => i.type === filters.type);
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    data = data.filter(i => i.name?.toLowerCase().includes(q) || i.district?.toLowerCase().includes(q) || i.state?.toLowerCase().includes(q) || i.scheme?.toLowerCase().includes(q));
-  }
   return data;
 }
 
@@ -165,10 +161,6 @@ export async function getInspections(filters = {}) {
   let data = await fetchStatic("inspections");
   if (filters.status) data = data.filter(i => i.status === filters.status);
   if (filters.type) data = data.filter(i => i.type === filters.type);
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    data = data.filter(i => i.institute_name?.toLowerCase().includes(q) || i.inspector_name?.toLowerCase().includes(q));
-  }
   return data;
 }
 
