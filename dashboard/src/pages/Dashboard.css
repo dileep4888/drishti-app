@@ -1154,7 +1154,31 @@
   font-size: 12px;
 }
 
-.video-call-container { flex: 1; min-height: 0; }
+.video-call-container { flex: 1; min-height: 0; position: relative; }
+
+.video-call-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+  z-index: 2;
+}
+
+.video-call-status .spin { animation: vc-spin 1s linear infinite; }
+.video-call-status .vc-spin { animation: vc-spin 1s linear infinite; }
+
+@keyframes vc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* ── Filter Bar ──────────────────────────────────────────────── */
 
