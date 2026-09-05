@@ -8,6 +8,23 @@ export default function AnalyticsSection({ analytics }) {
 
   return (
     <div className="analytics-grid">
+      {/* ── Recharts dark-mode fix ── */}
+      <style>{`
+        .recharts-wrapper, .recharts-surface, .recharts-text, .recharts-rectangle,
+        .recharts-dot, .recharts-cartesian-grid-horizontal line,
+        .recharts-cartesian-grid-vertical line {
+          color: var(--text-muted) !important;
+          fill: var(--text-muted) !important;
+        }
+        .recharts-tooltip-wrapper .recharts-default-tooltip {
+          background: var(--bg-card) !important;
+          color: var(--text-primary) !important;
+          border: 1px solid var(--border) !important;
+        }
+        .recharts-tooltip-wrapper .recharts-default-tooltip td {
+          color: var(--text-primary) !important;
+        }
+      `}</style>
       <div className="card chart-card">
         <h3 className="card-title">Risk Distribution</h3>
         <ResponsiveContainer width="100%" height={280}>
