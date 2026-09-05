@@ -9,6 +9,7 @@ import {
 import GlobalSearch from "../components/GlobalSearch";
 import SentimentAnalyzer from "../components/SentimentAnalyzer";
 import ExifVerifier from "../components/ExifVerifier";
+import SectionBoundary from "../components/SectionBoundary.jsx";
 import VideoCallModal from "../components/VideoCallModal";
 import {
   LayoutDashboard, ClipboardCheck, Map, FolderKanban, BarChart3, Bell,
@@ -684,7 +685,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                 )}
 
                 {activeNav === "video-calls" && (
-                  <>
+                  <SectionBoundary label="Video Call Log">
                     <div className="page-header"><h2>Settings</h2><p>Surprise video verification calls</p></div>
                     <div style={{ marginBottom: 16 }}><button className="btn-primary" onClick={() => setVideoCallRoom(`official-${Date.now()}`)}><Video size={14} className="lucide" /> Start Surprise Video Call</button></div>
                     <ExifVerifier />
@@ -705,7 +706,7 @@ export default function Dashboard({ user, onLogout, onNavigate, preloaded }) {
                       </tbody>
                     </table></div>
                     {videoCalls.length === 0 && <div className="empty-state"><Video size={32} /><p>No video calls logged</p></div>}
-                  </>
+                  </SectionBoundary>
                 )}
 
                 {activeNav === "beneficiaries" && (

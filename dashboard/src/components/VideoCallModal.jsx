@@ -13,12 +13,33 @@ function loadJitsiScript() {
       script.async = true;
       document.head.appendChild(script);
     }
-    if (script.dataset.loaded === "true") return resolve();
+    // If a previous modal open already loaded the script, its "load" event has
+    // already fired — poll for the global instead of waiting for a dead event.
+    if (script.dataset.loaded === "true" || window.JitsiMeetExternalAPI) {
+      script.dataset.loaded = "true";
+      return resolve();
+    }
+    let tries = 0;
+    const poll = setInterval(() => {
+      tries += 1;
+      if (window.JitsiMeetExternalAPI) {
+        clearInterval(poll);
+        script.dataset.loaded = "true";
+        resolve();
+      } else if (tries > 40) { // ~20s timeout
+        clearInterval(poll);
+        reject(new Error("Jitsi SDK load timed out"));
+      }
+    }, 500);
     script.addEventListener("load", () => {
+      clearInterval(poll);
       script.dataset.loaded = "true";
       resolve();
     });
-    script.addEventListener("error", () => reject(new Error("Failed to load Jitsi SDK")));
+    script.addEventListener("error", () => {
+      clearInterval(poll);
+      reject(new Error("Failed to load Jitsi SDK"));
+    });
   });
 }
 
@@ -62,8 +83,10 @@ export default function VideoCallModal({ roomName, displayName, onClose }) {
   }, [roomName, displayName, onClose]);
 
   useEffect(() => {
+    let cancelled = false;
     initJitsi();
     return () => {
+      cancelled = true;
       if (apiRef.current) {
         try { apiRef.current.dispose(); } catch { /* ignore */ }
         apiRef.current = null;
